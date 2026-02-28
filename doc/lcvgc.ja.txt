@@ -1,0 +1,267 @@
+*lcvgc.ja.txt*	lcvgcエンジン用Neovimプラグイン
+
+Author: vikke
+License: MIT
+
+==============================================================================
+目次                                                    *lcvgc-ja-contents*
+
+  はじめに ................................ |lcvgc-ja-introduction|
+  動作要件 ................................ |lcvgc-ja-requirements|
+  インストール ............................ |lcvgc-ja-installation|
+  設定 .................................... |lcvgc-ja-configuration|
+  コマンド ................................ |lcvgc-ja-commands|
+  キーマップ .............................. |lcvgc-ja-mappings|
+  レイアウト .............................. |lcvgc-ja-layout|
+  カラースキーム .......................... |lcvgc-ja-colors|
+  Tree-sitter ............................. |lcvgc-ja-treesitter|
+  LSP連携 ................................. |lcvgc-ja-lsp|
+
+==============================================================================
+はじめに                                            *lcvgc-ja-introduction*
+
+lcvgc.nvimは、lcvgcエンジン（Rustデーモン）と通信し、音楽DSLのeval・
+再生制御・フィードバック表示を行うNeovimプラグインである。
+
+アーキテクチャ:
+>
+  +---------------------------+------------------+
+  |                           |                  |
+  |                           |   ログ tail      |
+  |   メイン                   |   (engine出力)   |
+  |   DSL編集 (.cvg)          |                  |
+  |                           +------------------+
+  |                           |                  |
+  |                           |  eval結果        |
+  |                           |  (成功/エラー)    |
+  +---------------------------+------------------+
+<
+lcvgcエンジンはデーモンとして独立起動する。Neovimプラグインはソケット
+（TCP）でエンジンに接続する。
+
+- エンジンが独立プロセスなので、Neovimが落ちても演奏が続く
+- Neovimを再起動して再接続すれば、続きからコーディングできる
+
+==============================================================================
+動作要件                                            *lcvgc-ja-requirements*
+
+- Neovim 0.10 以上
+- lcvgcエンジン（別途インストール）
+- Tree-sitterハイライトを使う場合: nvim-treesitter
+
+==============================================================================
+インストール                                        *lcvgc-ja-installation*
+
+lazy.nvim (推奨):~
+>lua
+  {
+    'your-user/lcvgc.nvim',
+    ft = 'cvg',
+    opts = {
+      port = 9876,
+      log_path = '/tmp/lcvgc.log',
+    },
+  }
+<
+
+vim-plug:~
+>vim
+  Plug 'your-user/lcvgc.nvim'
+
+  " init.lua または after/plugin/lcvgc.lua に記述:
+  " require('lcvgc').setup()
+<
+
+packer.nvim:~
+>lua
+  use {
+    'your-user/lcvgc.nvim',
+    config = function()
+      require('lcvgc').setup()
+    end,
+  }
+<
+
+mini.deps:~
+>lua
+  local add = MiniDeps.add
+  add('your-user/lcvgc.nvim')
+  require('lcvgc').setup()
+<
+
+dein.vim:~
+>vim
+  call dein#add('your-user/lcvgc.nvim')
+
+  " init.lua に記述:
+  " require('lcvgc').setup()
+<
+
+手動インストール:~
+>bash
+  git clone https://github.com/your-user/lcvgc.nvim \
+    ~/.local/share/nvim/site/pack/plugins/start/lcvgc.nvim
+<
+
+==============================================================================
+設定                                              *lcvgc-ja-configuration*
+
+                                                          *lcvgc.setup()*
+require('lcvgc').setup({opts})
+
+  setup()にテーブルを渡して設定する。全項目にデフォルト値がある。
+
+  オプション:~
+
+  port           `number`  (デフォルト: 9876)
+    lcvgcエンジンの接続先ポート番号。
+
+  log_path       `string`  (デフォルト: "/tmp/lcvgc.log")
+    エンジンのログファイルパス。|:LcvgcLayout| でtailするファイル。
+
+  auto_connect   `boolean` (デフォルト: false)
+    trueにするとsetup()時に自動でエンジンに接続する。
+
+  auto_layout    `boolean` (デフォルト: false)
+    trueにすると .cvg ファイルを開いた時に自動で3ペインレイアウトを
+    構築する。
+
+  設定例:~
+>lua
+  require('lcvgc').setup({
+    port = 9876,
+    log_path = '/tmp/lcvgc.log',
+    auto_connect = true,
+    auto_layout = true,
+  })
+<
+
+==============================================================================
+コマンド                                              *lcvgc-ja-commands*
+
+:LcvgcConnect [{port}]                                    *:LcvgcConnect*
+  lcvgcエンジンに接続する。{port}を省略するとsetupで指定したポート
+  （デフォルト: 9876）を使用する。
+
+:LcvgcDisconnect                                       *:LcvgcDisconnect*
+  エンジンとの接続を切断する。
+
+:LcvgcStatus                                              *:LcvgcStatus*
+  エンジンの現在の状態を表示する。テンポ、再生中のscene、再生中の
+  clip一覧、現在の小節/拍位置を通知する。
+
+:LcvgcStop                                                  *:LcvgcStop*
+  全clipの再生を停止する。`stop` をevalするショートカット。
+
+:LcvgcLayout                                              *:LcvgcLayout*
+  3ペインレイアウトを構築する。詳細は |lcvgc-ja-layout| を参照。
+
+:LcvgcMicStart [{options}]                              *:LcvgcMicStart*
+  マイク入力を開始する。外部バイナリ `lcvgc-mic` を起動し、検出した
+  音名をカーソル位置に挿入する。
+
+  カーソル位置のclipに `[scale ...]` が指定されている場合、--key と
+  --scale が自動的に付与される。clipレベルのscaleがない場合は
+  グローバルの scale 設定にフォールバックする。
+
+  オプション例:~
+>
+  :LcvgcMicStart --quantize 8
+  :LcvgcMicStart --key c --scale minor
+<
+
+:LcvgcMicStop                                            *:LcvgcMicStop*
+  マイク入力を停止する。
+
+==============================================================================
+キーマップ                                            *lcvgc-ja-mappings*
+
+以下のキーマップがsetup()時に自動的に設定される。
+
+<C-e>   ノーマルモード                              *lcvgc-eval-paragraph*
+  現在の段落（空行区切りのブロック）を自動選択してevalする。
+
+<C-e>   ビジュアルモード                            *lcvgc-eval-selection*
+  選択範囲をevalする。
+
+==============================================================================
+レイアウト                                            *lcvgc-ja-layout*
+
+|:LcvgcLayout| は以下の3ペイン構成を構築する。
+
+  メイン（左）     DSLファイル編集 (.cvg)
+  ログ（右上）     エンジンのログ出力 (tail -f)
+  eval結果（右下） evalの成功/エラー表示
+
+eval結果ペインは、成功時は緑系（DiffAdd）、エラー時は赤系（ErrorMsg）
+のハイライトが適用される。
+
+==============================================================================
+カラースキーム                                          *lcvgc-ja-colors*
+
+暗いターミナル背景・暗い環境（クラブ等）で視認性を確保する配色。
+Material Darker系をベースに、彩度を抑えつつ十分なコントラストを保つ。
+
+setup()時に自動的にハイライトグループが設定される。
+
+主な配色:~
+
+  要素                ハイライトグループ            色
+  --------            ------------------            ------
+  予約語              @keyword.cvg                  #C792EA 薄紫
+  定義名              @type.definition.cvg          #FFCB6B 明るい黄
+  参照名              @function.cvg                 #82AAFF 明るい青
+  音名                @constant.cvg                 #F78C6C オレンジ
+  数値                @number.cvg                   #89DDFF シアン
+  ステップパターン    @string.cvg                   #C3E88D 明るい緑
+  確率                @number.special.cvg           #FF5370 赤
+  コード名            @string.special.cvg           #FF9CAC ピンク
+  play                @keyword.play.cvg             #C3E88D 緑太字
+  stop                @keyword.stop.cvg             #FF5370 赤太字
+  コメント            @comment.cvg                  #546E7A グレー
+
+設計方針:~
+
+- 音名（オレンジ）が最も目を引く。楽譜の中心部分
+- play（緑太字）/ stop（赤太字）は信号機の色で直感的
+- ステップパターン（緑）と確率行（赤）が上下で一目で区別可能
+- コメント（暗いグレー）は演奏中に視界の邪魔にならない
+
+==============================================================================
+Tree-sitter                                          *lcvgc-ja-treesitter*
+
+lcvgcのDSL用にTree-sitter grammarが同梱されている。
+
+tree-sitter-cvg のインストール:~
+
+nvim-treesitterを使用している場合、パーサーの登録が必要:
+>lua
+  local parser_config = require('nvim-treesitter.parsers').get_parser_configs()
+  parser_config.cvg = {
+    install_info = {
+      url = '/path/to/lcvgc.nvim/tree-sitter-cvg',
+      files = { 'src/parser.c' },
+    },
+    filetype = 'cvg',
+  }
+<
+その後 `:TSInstall cvg` でパーサーをビルドする。
+
+==============================================================================
+LSP連携                                                  *lcvgc-ja-lsp*
+
+setup()時に、filetype `cvg` のファイルを開くと自動的にLSPクライアント
+が起動する。LSPサーバーはlcvgcエンジンのサブコマンドとして実行される。
+>
+  lcvgc lsp
+<
+LSPが提供する機能:~
+
+  補完           全ての文脈で候補と説明を表示
+  インレイヒント 次に来る値の説明をグレーで表示
+  診断           パースエラー、未定義の参照、bars超過
+  定義ジャンプ   clip名やinstrument名から定義元へジャンプ
+  ホバー         clipやsceneの内容プレビュー
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

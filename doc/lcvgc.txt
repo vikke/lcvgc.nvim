@@ -1,0 +1,275 @@
+*lcvgc.txt*	Neovim plugin for the lcvgc engine
+
+Author: vikke
+License: MIT
+
+==============================================================================
+CONTENTS                                                    *lcvgc-contents*
+
+  Introduction ............................ |lcvgc-introduction|
+  Requirements ............................ |lcvgc-requirements|
+  Installation ............................ |lcvgc-installation|
+  Configuration ........................... |lcvgc-configuration|
+  Commands ................................ |lcvgc-commands|
+  Mappings ................................ |lcvgc-mappings|
+  Layout .................................. |lcvgc-layout|
+  Color Scheme ............................ |lcvgc-colors|
+  Tree-sitter ............................. |lcvgc-treesitter|
+  LSP Integration ......................... |lcvgc-lsp|
+
+==============================================================================
+INTRODUCTION                                            *lcvgc-introduction*
+
+lcvgc.nvim is a Neovim plugin that communicates with the lcvgc engine (a Rust
+daemon) to evaluate a music DSL, control playback, and display feedback.
+
+Architecture:
+>
+  +---------------------------+------------------+
+  |                           |                  |
+  |                           |   Log tail       |
+  |   Main                    |   (engine output)|
+  |   DSL editing (.cvg)      |                  |
+  |                           +------------------+
+  |                           |                  |
+  |                           |  Eval result     |
+  |                           |  (success/error) |
+  +---------------------------+------------------+
+<
+The lcvgc engine runs independently as a daemon. The Neovim plugin connects
+to the engine via a TCP socket.
+
+- Since the engine is a separate process, playback continues even if Neovim
+  crashes
+- You can restart Neovim and reconnect to resume live coding
+
+==============================================================================
+REQUIREMENTS                                            *lcvgc-requirements*
+
+- Neovim 0.10 or later
+- lcvgc engine (installed separately)
+- For Tree-sitter highlighting: nvim-treesitter
+
+==============================================================================
+INSTALLATION                                            *lcvgc-installation*
+
+lazy.nvim (recommended):~
+>lua
+  {
+    'your-user/lcvgc.nvim',
+    ft = 'cvg',
+    opts = {
+      port = 9876,
+      log_path = '/tmp/lcvgc.log',
+    },
+  }
+<
+
+vim-plug:~
+>vim
+  Plug 'your-user/lcvgc.nvim'
+
+  " Add to init.lua or after/plugin/lcvgc.lua:
+  " require('lcvgc').setup()
+<
+
+packer.nvim:~
+>lua
+  use {
+    'your-user/lcvgc.nvim',
+    config = function()
+      require('lcvgc').setup()
+    end,
+  }
+<
+
+mini.deps:~
+>lua
+  local add = MiniDeps.add
+  add('your-user/lcvgc.nvim')
+  require('lcvgc').setup()
+<
+
+dein.vim:~
+>vim
+  call dein#add('your-user/lcvgc.nvim')
+
+  " Add to init.lua:
+  " require('lcvgc').setup()
+<
+
+Manual installation:~
+>bash
+  git clone https://github.com/your-user/lcvgc.nvim \
+    ~/.local/share/nvim/site/pack/plugins/start/lcvgc.nvim
+<
+
+==============================================================================
+CONFIGURATION                                          *lcvgc-configuration*
+
+                                                          *lcvgc.setup()*
+require('lcvgc').setup({opts})
+
+  Configure the plugin by passing a table to setup(). All options have
+  default values.
+
+  Options:~
+
+  port           `number`  (default: 9876)
+    Port number for connecting to the lcvgc engine.
+
+  log_path       `string`  (default: "/tmp/lcvgc.log")
+    Path to the engine's log file. This file is tailed by |:LcvgcLayout|.
+
+  auto_connect   `boolean` (default: false)
+    When set to true, automatically connects to the engine during setup().
+
+  auto_layout    `boolean` (default: false)
+    When set to true, automatically builds the 3-pane layout when a .cvg
+    file is opened.
+
+  Example:~
+>lua
+  require('lcvgc').setup({
+    port = 9876,
+    log_path = '/tmp/lcvgc.log',
+    auto_connect = true,
+    auto_layout = true,
+  })
+<
+
+==============================================================================
+COMMANDS                                                  *lcvgc-commands*
+
+:LcvgcConnect [{port}]                                    *:LcvgcConnect*
+  Connect to the lcvgc engine. If {port} is omitted, the port specified in
+  setup() is used (default: 9876).
+
+:LcvgcDisconnect                                       *:LcvgcDisconnect*
+  Disconnect from the engine.
+
+:LcvgcStatus                                              *:LcvgcStatus*
+  Display the current state of the engine: tempo, active scene, list of
+  playing clips, and current bar/beat position.
+
+:LcvgcStop                                                  *:LcvgcStop*
+  Stop playback of all clips. A shortcut for evaluating `stop`.
+
+:LcvgcLayout                                              *:LcvgcLayout*
+  Build the 3-pane layout. See |lcvgc-layout| for details.
+
+:LcvgcMicStart [{options}]                              *:LcvgcMicStart*
+  Start microphone input. Launches the external binary `lcvgc-mic` and
+  inserts detected pitch names at the cursor position.
+
+  If the clip at the cursor position has a `[scale ...]` attribute, --key
+  and --scale are automatically appended. If no clip-level scale is found,
+  the global scale setting is used as a fallback.
+
+  Example options:~
+>
+  :LcvgcMicStart --quantize 8
+  :LcvgcMicStart --key c --scale minor
+<
+
+:LcvgcMicStop                                            *:LcvgcMicStop*
+  Stop microphone input.
+
+==============================================================================
+MAPPINGS                                                  *lcvgc-mappings*
+
+The following key mappings are automatically set during setup().
+
+<C-e>   Normal mode                                 *lcvgc-eval-paragraph*
+  Automatically selects the current paragraph (block delimited by blank
+  lines) and evaluates it.
+
+<C-e>   Visual mode                                 *lcvgc-eval-selection*
+  Evaluates the selected range.
+
+==============================================================================
+LAYOUT                                                      *lcvgc-layout*
+
+|:LcvgcLayout| builds the following 3-pane layout.
+
+  Main (left)          DSL file editing (.cvg)
+  Log (upper right)    Engine log output (tail -f)
+  Eval result (lower right)  Eval success/error display
+
+The eval result pane is highlighted with green (DiffAdd) on success and
+red (ErrorMsg) on error.
+
+==============================================================================
+COLOR SCHEME                                                *lcvgc-colors*
+
+A color scheme designed for visibility on dark terminal backgrounds and in
+dark environments (such as clubs). Based on Material Darker, with reduced
+saturation while maintaining sufficient contrast.
+
+Highlight groups are automatically set during setup().
+
+Main colors:~
+
+  Element             Highlight Group               Color
+  --------            ------------------            ------
+  Keywords            @keyword.cvg                  #C792EA light purple
+  Definition names    @type.definition.cvg          #FFCB6B bright yellow
+  Reference names     @function.cvg                 #82AAFF bright blue
+  Pitch names         @constant.cvg                 #F78C6C orange
+  Numbers             @number.cvg                   #89DDFF cyan
+  Step patterns       @string.cvg                   #C3E88D bright green
+  Probability         @number.special.cvg           #FF5370 red
+  Chord names         @string.special.cvg           #FF9CAC pink
+  play                @keyword.play.cvg             #C3E88D green bold
+  stop                @keyword.stop.cvg             #FF5370 red bold
+  Comments            @comment.cvg                  #546E7A gray
+
+Design principles:~
+
+- Pitch names (orange) are the most eye-catching, as the central part of the
+  score
+- play (green bold) / stop (red bold) use traffic light colors for intuitive
+  recognition
+- Step patterns (green) and probability rows (red) are instantly
+  distinguishable when stacked vertically
+- Comments (dark gray) stay out of the way during a performance
+
+==============================================================================
+TREE-SITTER                                              *lcvgc-treesitter*
+
+A Tree-sitter grammar for the lcvgc DSL is bundled with the plugin.
+
+Installing tree-sitter-cvg:~
+
+If you are using nvim-treesitter, you need to register the parser:
+>lua
+  local parser_config = require('nvim-treesitter.parsers').get_parser_configs()
+  parser_config.cvg = {
+    install_info = {
+      url = '/path/to/lcvgc.nvim/tree-sitter-cvg',
+      files = { 'src/parser.c' },
+    },
+    filetype = 'cvg',
+  }
+<
+Then build the parser with `:TSInstall cvg`.
+
+==============================================================================
+LSP INTEGRATION                                              *lcvgc-lsp*
+
+When setup() is called, an LSP client is automatically launched upon opening
+a file with filetype `cvg`. The LSP server runs as a subcommand of the lcvgc
+engine.
+>
+  lcvgc lsp
+<
+Features provided by the LSP:~
+
+  Completion      Displays candidates and descriptions for all contexts
+  Inlay hints     Shows descriptions of expected values in gray
+  Diagnostics     Parse errors, undefined references, bars overflow
+  Go to definition  Jump from clip or instrument names to their definitions
+  Hover           Preview of clip and scene contents
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

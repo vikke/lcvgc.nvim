@@ -1,0 +1,9 @@
+language:
+  - lua
+  - markdown
+
+ls_specific_settings:
+  lua:
+    ls_path: /home/vikke/bin/lua-language-server/bin/lua-language-server
+  markdown:
+    ls_path: /snap/bin/marksman

@@ -1,0 +1,7 @@
+return {
+  default = {
+    ROOT = {"tests"},
+    pattern = "_spec",
+    helper = "tests/helpers/vim_mock",
+  }
+}
