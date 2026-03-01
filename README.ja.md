@@ -17,7 +17,7 @@ midi to cv を使っての moduler synth を想定した live coding tool kit.
 
 ```lua
 {
-  'your-user/lcvgc.nvim',
+  'vikke/lcvgc.nvim',
   ft = 'cvg',
   opts = {
     port = 9876,
@@ -29,7 +29,7 @@ midi to cv を使っての moduler synth を想定した live coding tool kit.
 ### vim-plug
 
 ```vim
-Plug 'your-user/lcvgc.nvim'
+Plug 'vikke/lcvgc.nvim'
 
 " init.lua または after/plugin/lcvgc.lua に記述:
 " require('lcvgc').setup()
@@ -39,7 +39,7 @@ Plug 'your-user/lcvgc.nvim'
 
 ```lua
 use {
-  'your-user/lcvgc.nvim',
+  'vikke/lcvgc.nvim',
   config = function()
     require('lcvgc').setup()
   end,
@@ -50,14 +50,14 @@ use {
 
 ```lua
 local add = MiniDeps.add
-add('your-user/lcvgc.nvim')
+add('vikke/lcvgc.nvim')
 require('lcvgc').setup()
 ```
 
 ### dein.vim
 
 ```vim
-call dein#add('your-user/lcvgc.nvim')
+call dein#add('vikke/lcvgc.nvim')
 
 " init.lua に記述:
 " require('lcvgc').setup()
@@ -66,7 +66,7 @@ call dein#add('your-user/lcvgc.nvim')
 ### 手動インストール
 
 ```bash
-git clone https://github.com/your-user/lcvgc.nvim \
+git clone https://github.com/vikke/lcvgc.nvim \
   ~/.local/share/nvim/site/pack/plugins/start/lcvgc.nvim
 ```
 

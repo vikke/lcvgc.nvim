@@ -16,7 +16,7 @@ An engine and Vim plugin for live coding. A live coding toolkit designed for mod
 
 ```lua
 {
-  'your-user/lcvgc.nvim',
+  'vikke/lcvgc.nvim',
   ft = 'cvg',
   opts = {
     port = 9876,
@@ -28,7 +28,7 @@ An engine and Vim plugin for live coding. A live coding toolkit designed for mod
 ### vim-plug
 
 ```vim
-Plug 'your-user/lcvgc.nvim'
+Plug 'vikke/lcvgc.nvim'
 
 " Add to init.lua or after/plugin/lcvgc.lua:
 " require('lcvgc').setup()
@@ -38,7 +38,7 @@ Plug 'your-user/lcvgc.nvim'
 
 ```lua
 use {
-  'your-user/lcvgc.nvim',
+  'vikke/lcvgc.nvim',
   config = function()
     require('lcvgc').setup()
   end,
@@ -49,14 +49,14 @@ use {
 
 ```lua
 local add = MiniDeps.add
-add('your-user/lcvgc.nvim')
+add('vikke/lcvgc.nvim')
 require('lcvgc').setup()
 ```
 
 ### dein.vim
 
 ```vim
-call dein#add('your-user/lcvgc.nvim')
+call dein#add('vikke/lcvgc.nvim')
 
 " Add to init.lua:
 " require('lcvgc').setup()
@@ -65,7 +65,7 @@ call dein#add('your-user/lcvgc.nvim')
 ### Manual Installation
 
 ```bash
-git clone https://github.com/your-user/lcvgc.nvim \
+git clone https://github.com/vikke/lcvgc.nvim \
   ~/.local/share/nvim/site/pack/plugins/start/lcvgc.nvim
 ```
 
