@@ -17,7 +17,7 @@ An engine and Vim plugin for live coding. A live coding toolkit designed for mod
 ```lua
 {
   'vikke/lcvgc.nvim',
-  ft = 'cvg',
+  event = { 'BufReadPre *.cvg', 'BufNewFile *.cvg' },
   opts = {
     port = 9876,
     log_path = '/tmp/lcvgc.log',
