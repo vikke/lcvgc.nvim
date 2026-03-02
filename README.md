@@ -72,6 +72,22 @@ If you use nvim-treesitter, you can install the cvg parser with the following co
 
 The parser information is automatically registered when `setup()` is called, so no additional configuration is needed.
 
+#### Windows Setup
+
+`:TSInstall cvg` compiles the parser from C source, so a C compiler is required.
+The easiest option is [MSYS2](https://www.msys2.org/) + MinGW-w64.
+
+1. Install [MSYS2](https://www.msys2.org/)
+2. In the MSYS2 terminal, install gcc:
+   ```bash
+   pacman -S mingw-w64-x86_64-gcc
+   ```
+3. Add `C:\msys64\mingw64\bin` to your Windows PATH environment variable
+4. Verify in PowerShell:
+   ```powershell
+   gcc --version
+   ```
+
 ### Manual Installation
 
 ```bash
