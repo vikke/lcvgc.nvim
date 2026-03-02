@@ -3,7 +3,9 @@
 module.exports = grammar({
   name: 'cvg',
 
-  extras: $ => [/\s/, $.comment],
+  externals: $ => [$.block_comment],
+
+  extras: $ => [/\s/, $.comment, $.block_comment],
 
   word: $ => $.identifier,
 

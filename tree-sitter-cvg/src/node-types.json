@@ -950,6 +950,10 @@
     "named": false
   },
   {
+    "type": "block_comment",
+    "named": true
+  },
+  {
     "type": "channel",
     "named": false
   },

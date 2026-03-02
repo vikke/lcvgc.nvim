@@ -833,6 +833,7 @@ vim.api.nvim_create_autocmd('User', {
 
 ;; コメント
 (comment) @comment
+(block_comment) @comment
 ```
 
 ---
