@@ -272,4 +272,4 @@ Features provided by the LSP:~
   Hover           Preview of clip and scene contents
 
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:ft=help:norl:enc=utf-8:
