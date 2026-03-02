@@ -62,6 +62,16 @@ call dein#add('vikke/lcvgc.nvim')
 " require('lcvgc').setup()
 ```
 
+### Tree-sitter Highlighting (Optional)
+
+If you use nvim-treesitter, you can install the cvg parser with the following command:
+
+```vim
+:TSInstall cvg
+```
+
+The parser information is automatically registered when `setup()` is called, so no additional configuration is needed.
+
 ### Manual Installation
 
 ```bash

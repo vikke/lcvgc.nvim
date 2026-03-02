@@ -63,6 +63,16 @@ call dein#add('vikke/lcvgc.nvim')
 " require('lcvgc').setup()
 ```
 
+### Tree-sitter ハイライト（任意）
+
+nvim-treesitter を使っている場合、以下のコマンドで cvg パーサーをインストールできます:
+
+```vim
+:TSInstall cvg
+```
+
+プラグインの `setup()` 呼び出し時にパーサー情報が自動登録されるため、追加の設定は不要です。
+
 ### 手動インストール
 
 ```bash

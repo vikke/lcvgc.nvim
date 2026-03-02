@@ -11,6 +11,7 @@ function M.setup(opts)
   opts = vim.tbl_deep_extend('force', defaults, opts or {})
   M.opts = opts
 
+  require('lcvgc.treesitter').setup()
   require('lcvgc.colors').setup()
   require('lcvgc.commands').setup(opts)
   require('lcvgc.lsp').setup()
