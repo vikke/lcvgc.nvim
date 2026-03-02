@@ -41,7 +41,7 @@ function M.setup()
   hl(0, '@operator.cvg', { fg = '#FFFFFF', bold = true })
 
   -- 文字列
-  hl(0, '@string.path.cvg', { fg = '#A5D6A7' })
+  hl(0, '@string.special.path.cvg', { fg = '#A5D6A7' })
 
   -- コメント
   hl(0, '@comment.cvg', { fg = '#546E7A', italic = true })
