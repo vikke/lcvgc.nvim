@@ -48,6 +48,9 @@ function M.setup()
 
   -- 括弧
   hl(0, '@punctuation.bracket.cvg', { fg = '#89DDFF', ctermfg = 117 })
+
+  -- eval フラッシュ（IncSearch にリンク）
+  hl(0, 'LcvgcEvalFlash', { link = 'IncSearch', default = true })
 end
 
 return M

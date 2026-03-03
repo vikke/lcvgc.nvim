@@ -67,8 +67,14 @@ vim_mock.fn = {
   end,
 }
 
+-- defer_fn: テスト時は即時実行
+vim_mock.defer_fn = function(fn, _timeout) fn() end
+
 -- vim.api
 vim_mock.api = {
+  nvim_create_namespace = function(_name) return 1 end,
+  nvim_buf_clear_namespace = function() end,
+  nvim_buf_set_extmark = function() return 1 end,
   nvim_buf_is_valid = function() return false end,
   nvim_create_buf = function() return 1 end,
   nvim_buf_set_name = function() end,

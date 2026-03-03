@@ -9,6 +9,7 @@ local defaults = {
   auto_connect = false,
   auto_layout = false,
   debounce = 150,
+  flash_duration = 300,
 }
 
 function M.setup(opts)

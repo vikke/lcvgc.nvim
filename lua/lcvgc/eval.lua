@@ -1,4 +1,5 @@
 local connection = require('lcvgc.connection')
+local flash = require('lcvgc.flash')
 
 local M = {}
 
@@ -78,6 +79,7 @@ function M.eval_file()
 
   M._last_source_map = source_map
   local text = table.concat(expanded, '\n')
+  flash.flash_range(bufnr, 1, line_count)
   connection.send({ type = 'eval', source = text })
 end
 
@@ -86,6 +88,7 @@ function M.eval_selection()
   local end_line = vim.fn.line("'>")
   local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
   local text = table.concat(lines, '\n')
+  flash.flash_range(0, start_line, end_line)
   connection.send({ type = 'eval', source = text })
 end
 
@@ -114,6 +117,7 @@ function M.eval_paragraph()
 
   local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
   local text = table.concat(lines, '\n')
+  flash.flash_range(0, start_line, end_line)
   connection.send({ type = 'eval', source = text })
 end
 
