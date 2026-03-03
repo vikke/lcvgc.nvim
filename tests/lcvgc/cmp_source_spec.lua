@@ -225,13 +225,21 @@ describe("lcvgc.cmp_source", function()
       cmp_mock.register_source_calls = {}
       cmp_mock.filetype_calls = {}
 
-      cmp_source.setup()
+      cmp_source.setup({ debounce = 200 })
 
       assert.equals(1, #cmp_mock.register_source_calls)
       assert.equals("lcvgc", cmp_mock.register_source_calls[1].name)
 
       assert.equals(1, #cmp_mock.filetype_calls)
       assert.equals("cvg", cmp_mock.filetype_calls[1].ft)
+      assert.equals(200, cmp_mock.filetype_calls[1].opts.performance.debounce)
+    end)
+
+    it("opts 未指定時はデフォルト 150ms", function()
+      cmp_mock.filetype_calls = {}
+
+      cmp_source.setup()
+
       assert.equals(150, cmp_mock.filetype_calls[1].opts.performance.debounce)
     end)
 

@@ -79,16 +79,21 @@ end
 --- cmp が未インストールの場合は何もしない
 --- nvim-cmp にソースを登録する
 --- cmp が未インストールの場合は何もしない
-function M.setup()
+--- nvim-cmp にソースを登録する
+--- cmp が未インストールの場合は何もしない
+--- @param opts table|nil プラグイン設定（opts.debounce で補完遅延を指定）
+function M.setup(opts)
   local ok, cmp = pcall(require, 'cmp')
   if not ok then
     return
   end
 
+  local debounce = (opts and opts.debounce) or 150
+
   cmp.register_source('lcvgc', source.new())
   cmp.setup.filetype('cvg', {
     performance = {
-      debounce = 150,
+      debounce = debounce,
     },
     sources = {
       { name = 'lcvgc' },

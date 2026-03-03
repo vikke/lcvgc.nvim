@@ -8,6 +8,7 @@ local defaults = {
   log_path = '/tmp/lcvgc.log',
   auto_connect = false,
   auto_layout = false,
+  debounce = 150,
 }
 
 function M.setup(opts)
@@ -20,7 +21,7 @@ function M.setup(opts)
   require('lcvgc.lsp').setup()
 
   require('lcvgc.completion').setup()
-  require('lcvgc.cmp_source').setup()
+  require('lcvgc.cmp_source').setup(opts)
 
   if opts.auto_connect then
     local connection = require('lcvgc.connection')
