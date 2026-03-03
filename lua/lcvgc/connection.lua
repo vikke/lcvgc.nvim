@@ -62,7 +62,8 @@ function M.is_connected()
 end
 
 function M._on_data(data)
-  local raw = table.concat(data, '')
+  -- Neovimのon_dataは改行で分割したリストを渡すため、'\n'で結合して復元する
+  local raw = table.concat(data, '\n')
   recv_buf = recv_buf .. raw
 
   while true do
