@@ -77,6 +77,8 @@ end
 
 --- nvim-cmp にソースを登録する
 --- cmp が未インストールの場合は何もしない
+--- nvim-cmp にソースを登録する
+--- cmp が未インストールの場合は何もしない
 function M.setup()
   local ok, cmp = pcall(require, 'cmp')
   if not ok then
@@ -85,6 +87,9 @@ function M.setup()
 
   cmp.register_source('lcvgc', source.new())
   cmp.setup.filetype('cvg', {
+    performance = {
+      debounce = 150,
+    },
     sources = {
       { name = 'lcvgc' },
       { name = 'nvim_lsp' },

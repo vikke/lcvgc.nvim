@@ -232,6 +232,7 @@ describe("lcvgc.cmp_source", function()
 
       assert.equals(1, #cmp_mock.filetype_calls)
       assert.equals("cvg", cmp_mock.filetype_calls[1].ft)
+      assert.equals(150, cmp_mock.filetype_calls[1].opts.performance.debounce)
     end)
 
     it("cmp なしでもエラーにならない", function()
