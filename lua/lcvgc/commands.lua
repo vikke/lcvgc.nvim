@@ -35,7 +35,10 @@ function M.setup(opts)
 
   vim.api.nvim_create_user_command('LcvgcConnect', function(cmd)
     local port = tonumber(cmd.args) or opts.port or 9876
-    connection.connect(port, display.on_message)
+    local ok = connection.connect(port, display.on_message)
+    if ok then
+      require('lcvgc.ports').fetch()
+    end
   end, { nargs = '?' })
 
   vim.api.nvim_create_user_command('LcvgcDisconnect', function()
@@ -73,6 +76,16 @@ function M.setup(opts)
 
   vim.api.nvim_create_user_command('LcvgcLayout', function()
     layout.setup({ log_path = opts.log_path })
+  end, {})
+
+  vim.api.nvim_create_user_command('LcvgcListPorts', function()
+    local ports = require('lcvgc.ports')
+    local names = ports.get_output_ports()
+    if #names == 0 then
+      vim.notify('No MIDI ports available (connected?)', vim.log.levels.WARN)
+      return
+    end
+    vim.notify('MIDI output ports:\n' .. table.concat(names, '\n'), vim.log.levels.INFO)
   end, {})
 
   vim.api.nvim_create_user_command('LcvgcMicStart', function(cmd)

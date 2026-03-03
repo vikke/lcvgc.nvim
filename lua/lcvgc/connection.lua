@@ -3,6 +3,7 @@ local M = {}
 local handle = 0
 local recv_buf = ''
 local on_message_cb = nil
+local response_handlers = {}
 
 function M.connect(port, on_message)
   port = port or 9876
@@ -36,6 +37,7 @@ function M.disconnect()
     vim.fn.chanclose(handle)
     handle = 0
     recv_buf = ''
+    response_handlers = {}
     vim.notify('lcvgc disconnected', vim.log.levels.INFO)
   end
 end
@@ -48,6 +50,11 @@ function M.send(payload)
   local json = vim.fn.json_encode(payload)
   vim.fn.chansend(handle, json .. '\n')
   return true
+end
+
+function M.request(payload, handler)
+  table.insert(response_handlers, handler)
+  return M.send(payload)
 end
 
 function M.is_connected()
@@ -63,11 +70,21 @@ function M._on_data(data)
     if not nl then break end
     local line = recv_buf:sub(1, nl - 1)
     recv_buf = recv_buf:sub(nl + 1)
-    if line ~= '' and on_message_cb then
+    if line ~= '' then
       local ok, msg = pcall(vim.fn.json_decode, line)
       if ok then
         vim.schedule(function()
-          on_message_cb(msg)
+          local handled = false
+          for i = #response_handlers, 1, -1 do
+            if response_handlers[i](msg) then
+              table.remove(response_handlers, i)
+              handled = true
+              break
+            end
+          end
+          if not handled and on_message_cb then
+            on_message_cb(msg)
+          end
         end)
       end
     end

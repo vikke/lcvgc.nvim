@@ -1,5 +1,8 @@
 local M = {}
 
+--- プラグインバージョン
+M.version = '0.4.0'
+
 local defaults = {
   port = 9876,
   log_path = '/tmp/lcvgc.log',
@@ -16,10 +19,15 @@ function M.setup(opts)
   require('lcvgc.commands').setup(opts)
   require('lcvgc.lsp').setup()
 
+  require('lcvgc.completion').setup()
+
   if opts.auto_connect then
     local connection = require('lcvgc.connection')
     local display = require('lcvgc.display')
-    connection.connect(opts.port, display.on_message)
+    local ok = connection.connect(opts.port, display.on_message)
+    if ok then
+      require('lcvgc.ports').fetch()
+    end
   end
 
   -- 新規 .cvg ファイル作成時にサンプルテンプレートを自動挿入

@@ -37,6 +37,8 @@ vim_mock.fn = {
     return path
   end,
   line = function() return 1 end,
+  col = function() return 1 end,
+  complete = function() end,
   json_encode = function(v)
     -- 簡易 JSON エンコード (テスト用)
     if type(v) == "table" then
@@ -81,6 +83,9 @@ vim_mock.api = {
   nvim_create_autocmd = function() end,
   nvim_create_augroup = function() return 1 end,
   nvim_put = function() end,
+  nvim_get_current_line = function() return '' end,
+  nvim_list_bufs = function() return {} end,
+  nvim_buf_is_loaded = function() return false end,
 }
 
 -- vim.bo (buffer options proxy)
@@ -100,6 +105,9 @@ vim_mock.keymap = { set = function() end }
 
 -- vim.lsp
 vim_mock.lsp = {}
+
+-- vim.treesitter
+vim_mock.treesitter = { start = function() end }
 
 -- vim.tbl_deep_extend
 vim_mock.tbl_deep_extend = function(_behavior, ...)
