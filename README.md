@@ -15,8 +15,24 @@ An engine and Vim plugin for live coding. A live coding toolkit designed for mod
 ### lazy.nvim (Recommended)
 
 ```lua
+-- lcvgc.nvim dev mode configuration
+-- Controlled by environment variables:
+--   LSP_DEV_MODE=TRUE  : Load the plugin from local source (enables dev mode)
+--   LSP_DEV_PATH=<path>: Plugin directory path for dev mode
+--                        e.g. LSP_DEV_PATH=~/vcswork/lcvgc.nvim
+local function dev_config()
+  local is_dev = vim.env.LSP_DEV_MODE == 'TRUE'
+  return {
+    dev = is_dev,
+    dir = is_dev and vim.env.LSP_DEV_PATH or nil,
+  }
+end
+
+local dev = dev_config()
 {
   'vikke/lcvgc.nvim',
+  dev = dev.dev,
+  dir = dev.dir,
   event = { 'BufReadPre *.cvg', 'BufNewFile *.cvg' },
   opts = {
     port = 5555,

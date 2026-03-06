@@ -16,8 +16,24 @@ midi to cv を使っての moduler synth を想定した live coding tool kit.
 ### lazy.nvim (推奨)
 
 ```lua
+-- lcvgc.nvim 開発モード設定
+-- 以下の環境変数で制御:
+--   LSP_DEV_MODE=TRUE  : ローカルのソースからプラグインを読み込む（dev mode有効）
+--   LSP_DEV_PATH=<path>: dev mode時のプラグインディレクトリパス
+--                        例: LSP_DEV_PATH=~/vcswork/lcvgc.nvim
+local function dev_config()
+  local is_dev = vim.env.LSP_DEV_MODE == 'TRUE'
+  return {
+    dev = is_dev,
+    dir = is_dev and vim.env.LSP_DEV_PATH or nil,
+  }
+end
+
+local dev = dev_config()
 {
   'vikke/lcvgc.nvim',
+  dev = dev.dev,
+  dir = dev.dir,
   event = { 'BufReadPre *.cvg', 'BufNewFile *.cvg' },
   opts = {
     port = 5555,
