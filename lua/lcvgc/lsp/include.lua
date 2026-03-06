@@ -113,9 +113,12 @@ function M._resolve_recursive(lines, base_dir, visited, include_sources, diagnos
           M._resolve_recursive(child_lines, inc_dir, visited, include_sources, diagnostics)
         end
       end
+    elseif line:match('^%s*//') or line:match('^%s*$') then
+      -- コメント行・空行はスキップしてincludeフェーズを継続
+      -- Skip comment lines and blank lines, continue include phase
     else
-      -- 非include行が出現したらincludeフェーズ終了
-      -- End include phase when non-include line appears
+      -- 非include・非コメント・非空行が出現したらincludeフェーズ終了
+      -- End include phase when non-include, non-comment, non-blank line appears
       include_phase = false
     end
   end
