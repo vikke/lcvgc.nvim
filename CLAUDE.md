@@ -53,6 +53,16 @@
   ```
 - 詳細な環境構築手順は `README.ja.md` の「テスト環境構築」セクションを参照。
 
+## バージョン管理
+
+- **厳守**: mainブランチへのコミット前に、変更に関連するコンポーネントのバージョンインクリメントをユーザーに確認する事。
+- 対象コンポーネント:
+    - lcvgc.nvim: `lua/lcvgc/init.lua`
+    - lcvgc: `../lcvgc/crates/lcvgc/Cargo.toml`
+    - lcvgc-core: `../lcvgc/crates/lcvgc-core/Cargo.toml`
+- 選択肢: major / minor / patch / インクリメント不要
+- 変更した各コンポーネントについて個別に確認する事。
+
 ## **厳守**: 再発防止注意事項
 
 - 失敗をした場合には、このセクションにどうしたら繰替えさないかを追記していくこと。
