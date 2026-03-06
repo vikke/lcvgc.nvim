@@ -3,6 +3,8 @@
 --- バッファからsource/offsetを取得し、リクエストペイロードを構築する
 local M = {}
 
+local include = require('lcvgc.lsp.include')
+
 --- バッファ全文を文字列で返す
 --- @param bufnr number バッファ番号
 --- @return string バッファ全文（改行区切り）
@@ -31,12 +33,29 @@ end
 --- @param type_name string リクエストタイプ（"lsp_completion", "lsp_hover" 等）
 --- @param bufnr number バッファ番号
 --- @param opts table|nil オプション（offset不要なリクエスト用にoffset=falseを指定可能）
---- @return table リクエストペイロード
+--- @return table payload リクエストペイロード
+--- @return table|nil include_diagnostics include解決時の診断情報（ファイル未検出等）
 function M.build(type_name, bufnr, opts)
+  local source = M.get_source(bufnr)
   local payload = {
     type = type_name,
-    source = M.get_source(bufnr),
+    source = source,
   }
+
+  -- バッファのファイルパスからinclude解決を実施
+  -- Resolve includes from buffer file path
+  local buf_name = vim.api.nvim_buf_get_name(bufnr)
+  local inc_diagnostics = nil
+  if buf_name ~= '' then
+    local base_dir = vim.fn.fnamemodify(buf_name, ':h')
+    local include_sources, diags = include.resolve_includes(source, base_dir)
+    if #include_sources > 0 then
+      payload.include_sources = include_sources
+    end
+    if #diags > 0 then
+      inc_diagnostics = diags
+    end
+  end
 
   -- opts が nil または opts.offset ~= false の場合にオフセットを追加
   if opts == nil or opts.offset ~= false then
@@ -46,7 +65,7 @@ function M.build(type_name, bufnr, opts)
     payload.offset = M.get_byte_offset(bufnr, row, col)
   end
 
-  return payload
+  return payload, inc_diagnostics
 end
 
 return M

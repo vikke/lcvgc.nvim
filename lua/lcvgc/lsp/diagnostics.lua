@@ -33,6 +33,8 @@ local function convert_items(items)
 end
 
 --- デーモンから診断情報を取得してvim.diagnosticで表示する
+--- include解決はLua側で行い、include_sourcesとしてデーモンに送信する
+--- ファイル未検出などのinclude診断はLua側で生成し、デーモン応答とマージする
 --- @param bufnr number バッファ番号
 function M.update(bufnr)
   if not connection.is_connected() then
@@ -45,7 +47,7 @@ function M.update(bufnr)
 
   pending = true
 
-  local payload = request.build('lsp_diagnostics', bufnr, { offset = false })
+  local payload, include_diagnostics = request.build('lsp_diagnostics', bufnr, { offset = false })
 
   connection.request(payload, function(msg)
     pending = false
@@ -55,6 +57,15 @@ function M.update(bufnr)
     end
 
     local diagnostics = convert_items(msg.lsp.items)
+
+    -- include診断（ファイル未検出等）をマージ
+    -- Merge include diagnostics (missing files, etc.)
+    if include_diagnostics then
+      for _, d in ipairs(include_diagnostics) do
+        table.insert(diagnostics, d)
+      end
+    end
+
     vim.diagnostic.set(ns, bufnr, diagnostics)
 
     return true
