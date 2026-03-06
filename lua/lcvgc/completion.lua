@@ -6,7 +6,7 @@ local M = {}
 --- @param line string カーソル行のテキスト
 --- @return boolean port コンテキストかどうか
 function M.is_port_context(line)
-  return line:match('^%s*port%s+%S') ~= nil
+  return line:match('^%s*port%s+') ~= nil
 end
 
 function M.is_in_device_block(bufnr, row)

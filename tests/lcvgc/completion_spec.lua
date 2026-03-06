@@ -15,8 +15,8 @@ describe("lcvgc.completion", function()
       assert.is_true(completion.is_port_context("  port IAC Driver"))
     end)
 
-    it("port だけの行は false", function()
-      assert.is_false(completion.is_port_context("  port "))
+    it("port + スペースの行は true（補完トリガー可能）", function()
+      assert.is_true(completion.is_port_context("  port "))
     end)
 
     it("port のみ（末尾スペースなし）は false", function()
