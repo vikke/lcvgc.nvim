@@ -29,7 +29,17 @@ function M.expand_includes(lines, filepath, base_dir, visited)
   local source_map = {}
 
   for i, line in ipairs(lines) do
-    local include_path = line:match('^%s*include%s+"([^"]+)"%s*$')
+    -- 引用符なし構文: include の後から行末コメント（//）の前までをパスとして取得
+    local include_path = line:match('^%s*include%s+(.-)%s*$')
+    if include_path then
+      -- 行末コメントを除去
+      include_path = include_path:match('^(.-)%s*//')  or include_path
+      -- 前後の空白をトリム
+      include_path = include_path:match('^%s*(.-)%s*$')
+      if include_path == '' then
+        include_path = nil
+      end
+    end
     if include_path then
       local full_path = base_dir .. '/' .. include_path
       -- 正規化（簡易）

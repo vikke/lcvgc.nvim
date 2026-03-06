@@ -173,7 +173,7 @@ end
 
 ### 5.4 ファイル全体のeval（include展開 + ソースマップ）
 
-ファイル全体をevalする。`include "path.cvg"` を再帰的に展開し、展開済みテキストをエンジンに送信する。エンジンからのエラー行番号はソースマップで元ファイル:行番号に逆変換して表示する。
+ファイル全体をevalする。`include path.cvg` を再帰的に展開し、展開済みテキストをエンジンに送信する。エンジンからのエラー行番号はソースマップで元ファイル:行番号に逆変換して表示する。
 
 #### コマンド
 
@@ -186,7 +186,7 @@ end
 #### include展開の仕組み
 
 1. バッファ全テキストを取得
-2. 各行を走査し、`include "path.cvg"` にマッチする行を検出
+2. 各行を走査し、`include path.cvg` にマッチする行を検出
 3. パスは現在のファイルからの相対パスとして解決
 4. 対象ファイルを読み込み、再帰的に同じ展開処理を適用
 5. 展開時にソースマップ（展開後の行番号 → 元ファイルパス:元行番号）を構築
@@ -252,7 +252,7 @@ function M.expand_includes(lines, filepath, base_dir, visited)
   local source_map = {}
 
   for i, line in ipairs(lines) do
-    local include_path = line:match('^%s*include%s+"([^"]+)"')
+    local include_path = line:match('^%s*include%s+(.-)%s*$')
     if include_path then
       local full_path = base_dir .. '/' .. include_path
       local inc_lines = M.read_file(full_path)
@@ -743,8 +743,7 @@ nvim-cmp が未インストールの環境では `TextChangedI` autocmd + `vim.f
 
 | カーソル位置 | 補完 | ヒント |
 |-------------|------|--------|
-| `include ` の後 | `"` | 相対パス (.cvgファイル) |
-| `include "` の後 | (.cvgファイルパス補完) | — |
+| `include ` の後 | (.cvgファイルパス補完) | 相対パス (.cvgファイル) |
 | `tempo ` の後 | (数値) | BPM |
 
 ---

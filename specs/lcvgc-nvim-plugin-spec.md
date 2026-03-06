@@ -173,7 +173,7 @@ end
 
 ### 5.4 Evaluating the Entire File (Include Expansion + Source Map)
 
-Evaluates the entire file. Recursively expands `include "path.cvg"` directives and sends the expanded text to the engine. Error line numbers from the engine are reverse-mapped through the source map to display the original file:line information.
+Evaluates the entire file. Recursively expands `include path.cvg` directives and sends the expanded text to the engine. Error line numbers from the engine are reverse-mapped through the source map to display the original file:line information.
 
 #### Command
 
@@ -186,7 +186,7 @@ Key mapping: `<C-S-e>` (Normal mode)
 #### Include Expansion Mechanism
 
 1. Get all text from the buffer
-2. Scan each line and detect lines matching `include "path.cvg"`
+2. Scan each line and detect lines matching `include path.cvg`
 3. Resolve the path relative to the current file
 4. Read the target file and recursively apply the same expansion process
 5. Build a source map (expanded line number → original file path:original line number) during expansion
@@ -252,7 +252,7 @@ function M.expand_includes(lines, filepath, base_dir, visited)
   local source_map = {}
 
   for i, line in ipairs(lines) do
-    local include_path = line:match('^%s*include%s+"([^"]+)"')
+    local include_path = line:match('^%s*include%s+(.-)%s*$')
     if include_path then
       local full_path = base_dir .. '/' .. include_path
       local inc_lines = M.read_file(full_path)
@@ -743,8 +743,7 @@ The global `scale` is applied when a clip's `[scale ...]` is not specified. Can 
 
 | Cursor Position | Completion | Hint |
 |-----------------|------------|------|
-| After `include ` | `"` | Relative path (.cvg file) |
-| After `include "` | (.cvg file path completion) | — |
+| After `include ` | (.cvg file path completion) | Relative path (.cvg file) |
 | After `tempo ` | (numeric) | BPM |
 
 ---

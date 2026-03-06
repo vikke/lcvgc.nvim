@@ -7,16 +7,20 @@ describe("lcvgc.completion", function()
   end)
 
   describe("is_port_context", function()
-    it('port " で始まる行を検出する', function()
-      assert.is_true(completion.is_port_context('  port "'))
+    it("port の後に文字列がある行を検出する", function()
+      assert.is_true(completion.is_port_context("  port IAC"))
     end)
 
-    it('port "IAC を検出する', function()
-      assert.is_true(completion.is_port_context('  port "IAC'))
+    it("port の後にスペース付き文字列がある行を検出する", function()
+      assert.is_true(completion.is_port_context("  port IAC Driver"))
     end)
 
     it("port だけの行は false", function()
       assert.is_false(completion.is_port_context("  port "))
+    end)
+
+    it("port のみ（末尾スペースなし）は false", function()
+      assert.is_false(completion.is_port_context("  port"))
     end)
 
     it("空行は false", function()
@@ -24,7 +28,7 @@ describe("lcvgc.completion", function()
     end)
 
     it("他のキーワードは false", function()
-      assert.is_false(completion.is_port_context('  device "test'))
+      assert.is_false(completion.is_port_context("  device test"))
     end)
   end)
 
@@ -33,7 +37,7 @@ describe("lcvgc.completion", function()
       vim.api.nvim_buf_get_lines = function(_, start, _, _)
         local lines = {
           'device synth {',
-          '  port "',
+          '  port ',
         }
         return { lines[start + 1] }
       end
@@ -47,7 +51,7 @@ describe("lcvgc.completion", function()
       vim.api.nvim_buf_get_lines = function(_, start, _, _)
         local lines = {
           'instrument bass {',
-          '  port "',
+          '  port ',
         }
         return { lines[start + 1] }
       end
@@ -60,9 +64,9 @@ describe("lcvgc.completion", function()
       vim.api.nvim_buf_get_lines = function(_, start, _, _)
         local lines = {
           'device synth {',
-          '  port "IAC"',
+          '  port IAC',
           '}',
-          '  port "',
+          '  port ',
         }
         return { lines[start + 1] }
       end
@@ -94,9 +98,9 @@ describe("lcvgc.completion", function()
       })
 
       vim.api.nvim_get_current_line = function()
-        return '  port "'
+        return '  port '
       end
-      vim.fn.col = function() return 9 end
+      vim.fn.col = function() return 8 end
 
       local complete_args = nil
       vim.fn.complete = function(start, items)

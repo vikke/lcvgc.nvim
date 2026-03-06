@@ -69,10 +69,10 @@ describe("lcvgc.cmp_source", function()
   end)
 
   describe("get_trigger_characters", function()
-    it('{ \'"\' } を返す', function()
+    it("{ ' ' } を返す", function()
       local source = cmp_source.new()
       local chars = source:get_trigger_characters()
-      assert.same({ '"' }, chars)
+      assert.same({ ' ' }, chars)
     end)
   end)
 
@@ -115,7 +115,7 @@ describe("lcvgc.cmp_source", function()
       vim.api.nvim_buf_get_lines = function(_, start, _, _)
         local lines = {
           'device synth {',
-          '  port "',
+          '  port ',
         }
         return { lines[start + 1] }
       end
@@ -124,7 +124,7 @@ describe("lcvgc.cmp_source", function()
       local callback_result = nil
       local params = {
         context = {
-          cursor_before_line = '  port "',
+          cursor_before_line = '  port ',
           bufnr = 1,
         },
       }
@@ -147,7 +147,7 @@ describe("lcvgc.cmp_source", function()
       local callback_called = false
       local params = {
         context = {
-          cursor_before_line = "  note c4",
+          cursor_before_line = "  note c4 ",
           bufnr = 1,
         },
       }
@@ -175,7 +175,7 @@ describe("lcvgc.cmp_source", function()
       vim.api.nvim_buf_get_lines = function(_, start, _, _)
         local lines = {
           'instrument bass {',
-          '  port "',
+          '  port ',
         }
         return { lines[start + 1] }
       end
@@ -184,7 +184,7 @@ describe("lcvgc.cmp_source", function()
       local callback_called = false
       local params = {
         context = {
-          cursor_before_line = '  port "',
+          cursor_before_line = '  port ',
           bufnr = 1,
         },
       }
@@ -205,7 +205,7 @@ describe("lcvgc.cmp_source", function()
       vim.api.nvim_buf_get_lines = function(_, start, _, _)
         local lines = {
           'device synth {',
-          '  port "',
+          '  port ',
         }
         return { lines[start + 1] }
       end
@@ -214,7 +214,7 @@ describe("lcvgc.cmp_source", function()
       local callback_called = false
       local params = {
         context = {
-          cursor_before_line = '  port "',
+          cursor_before_line = '  port ',
           bufnr = 1,
         },
       }

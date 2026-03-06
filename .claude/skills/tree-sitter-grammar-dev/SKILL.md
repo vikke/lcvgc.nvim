@@ -50,7 +50,7 @@ device定義
 ==================
 
 device my_synth {
-  port "IAC Driver"
+  port IAC Driver
 }
 
 ---
@@ -59,7 +59,7 @@ device my_synth {
   (device_def
     (identifier)
     (device_body
-      (port_stmt (string)))))
+      (port_stmt (port_name)))))
 ```
 
 ## コマンド

@@ -4,7 +4,7 @@ describe('lcvgc.lsp.request', function()
   local request
 
   -- テスト用バッファ行データ
-  local mock_lines = { 'device synth1 {', '  port "MIDI Out"', '}' }
+  local mock_lines = { 'device synth1 {', '  port MIDI Out', '}' }
 
   -- nvim_buf_get_lines のモック保存用
   local original_get_lines
@@ -46,7 +46,7 @@ describe('lcvgc.lsp.request', function()
   describe('get_source', function()
     it('モックされたバッファ行から結合文字列を返す', function()
       local source = request.get_source(1)
-      assert.are.equal('device synth1 {\n  port "MIDI Out"\n}', source)
+      assert.are.equal('device synth1 {\n  port MIDI Out\n}', source)
     end)
   end)
 
@@ -64,10 +64,10 @@ describe('lcvgc.lsp.request', function()
 
     it('3行目の5バイト目のオフセットを正しく計算する', function()
       -- 'device synth1 {' = 15文字 + '\n' = 16
-      -- '  port "MIDI Out"' = 17文字 + '\n' = 18
-      -- + 5 = 39
+      -- '  port MIDI Out' = 15文字 + '\n' = 16
+      -- + 5 = 37
       local offset = request.get_byte_offset(1, 3, 5)
-      assert.are.equal(15 + 1 + 17 + 1 + 5, offset)
+      assert.are.equal(15 + 1 + 15 + 1 + 5, offset)
     end)
   end)
 
@@ -81,7 +81,7 @@ describe('lcvgc.lsp.request', function()
       local payload = request.build('lsp_completion', 1)
 
       assert.are.equal('lsp_completion', payload.type)
-      assert.are.equal('device synth1 {\n  port "MIDI Out"\n}', payload.source)
+      assert.are.equal('device synth1 {\n  port MIDI Out\n}', payload.source)
       -- 2行目5バイト目: 15 + 1 + 5 = 21
       assert.are.equal(21, payload.offset)
     end)
@@ -90,7 +90,7 @@ describe('lcvgc.lsp.request', function()
       local payload = request.build('lsp_diagnostics', 1, { offset = false })
 
       assert.are.equal('lsp_diagnostics', payload.type)
-      assert.are.equal('device synth1 {\n  port "MIDI Out"\n}', payload.source)
+      assert.are.equal('device synth1 {\n  port MIDI Out\n}', payload.source)
       assert.is_nil(payload.offset)
     end)
   end)

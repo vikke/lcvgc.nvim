@@ -19,9 +19,9 @@
 // Drum, bass, and FM synth clips are loaded from separate files.
 // ------------------------------------------------------------
 
-include "./sample_drums.cvg"
-include "./sample_bass.cvg"
-include "./sample_fm.cvg"
+include ./sample_drums.cvg
+include ./sample_bass.cvg
+include ./sample_fm.cvg
 
 // ------------------------------------------------------------
 // デバイス定義 (Device Definitions)
@@ -32,15 +32,15 @@ include "./sample_fm.cvg"
 // ------------------------------------------------------------
 
 device volca_drum {
-  port "volca drum"
+  port volca drum
 }
 
 device volca_bass {
-  port "volca bass"
+  port volca bass
 }
 
 device volca_fm {
-  port "volca fm"
+  port volca fm
 }
 
 // ------------------------------------------------------------

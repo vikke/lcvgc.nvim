@@ -77,7 +77,7 @@ describe("lcvgc.eval", function()
 
     it("include文を展開する", function()
       write_tmp("header.cvg", "tempo 120\nscale C major")
-      local lines = { 'include "header.cvg"', "clip drums" }
+      local lines = { 'include header.cvg', "clip drums" }
       local result, source_map = eval.expand_includes(lines, "main.cvg", tmpdir, {})
       assert.equals(3, #result)
       assert.equals("tempo 120", result[1])
@@ -93,9 +93,9 @@ describe("lcvgc.eval", function()
     end)
 
     it("再帰的にincludeを展開する", function()
-      write_tmp("a.cvg", 'include "b.cvg"\nline_a')
+      write_tmp("a.cvg", 'include b.cvg\nline_a')
       write_tmp("b.cvg", "line_b")
-      local lines = { 'include "a.cvg"', "line_main" }
+      local lines = { 'include a.cvg', "line_main" }
       local result, source_map = eval.expand_includes(lines, "main.cvg", tmpdir, {})
       assert.equals(3, #result)
       assert.equals("line_b", result[1])
@@ -107,7 +107,7 @@ describe("lcvgc.eval", function()
 
     it("重複includeをスキップする", function()
       write_tmp("shared.cvg", "shared_line")
-      local lines = { 'include "shared.cvg"', 'include "shared.cvg"', "main_line" }
+      local lines = { 'include shared.cvg', 'include shared.cvg', "main_line" }
       local result, _ = eval.expand_includes(lines, "main.cvg", tmpdir, {})
       -- sharedは1回だけ展開される
       assert.equals(2, #result)
@@ -116,7 +116,7 @@ describe("lcvgc.eval", function()
     end)
 
     it("存在しないファイルのincludeでエラーを返す", function()
-      local lines = { 'include "nonexistent.cvg"' }
+      local lines = { 'include nonexistent.cvg' }
       local result, source_map, err = eval.expand_includes(lines, "main.cvg", tmpdir, {})
       assert.is_truthy(err)
       assert.is_truthy(err:match("Cannot read"))

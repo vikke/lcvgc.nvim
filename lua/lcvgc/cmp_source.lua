@@ -30,7 +30,7 @@ end
 --- 補完トリガー文字を返す
 --- @return string[]
 function source:get_trigger_characters()
-  return { '"' }
+  return { ' ' }
 end
 
 --- 補完候補を返す
@@ -61,7 +61,7 @@ function source:complete(params, callback)
     return
   end
 
-  -- LSP 準拠の補完アイテムを構築（閉じ引用符は自動ペアリングに委ねる）
+  -- LSP 準拠の補完アイテムを構築（引用符なし構文）
   local items = {}
   for _, name in ipairs(names) do
     table.insert(items, {

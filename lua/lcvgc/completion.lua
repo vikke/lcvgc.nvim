@@ -1,7 +1,12 @@
 local M = {}
 
+--- port コンテキスト判定（引用符なし構文）
+--- `port ` の後に1文字以上の非空白文字がある行を検出する
+--- 行末コメント（//）は無視する
+--- @param line string カーソル行のテキスト
+--- @return boolean port コンテキストかどうか
 function M.is_port_context(line)
-  return line:match('^%s*port%s+"') ~= nil
+  return line:match('^%s*port%s+%S') ~= nil
 end
 
 function M.is_in_device_block(bufnr, row)
@@ -17,6 +22,8 @@ function M.is_in_device_block(bufnr, row)
   return false
 end
 
+--- port 補完をトリガーする（引用符なし構文）
+--- `port ` の後のテキストを補完候補で置き換える
 function M.trigger_port_completion()
   local ports = require('lcvgc.ports')
   local names = ports.get_output_ports()
@@ -27,12 +34,17 @@ function M.trigger_port_completion()
   local line = vim.api.nvim_get_current_line()
   local col = vim.fn.col('.')
   local before = line:sub(1, col - 1)
-  local start = before:find('"[^"]*$')
+  -- "port " の後の開始位置を見つける
+  local start = before:find('port%s+')
   if not start then
     return
   end
+  -- "port " の後の文字開始位置
+  local value_start = before:find('%S', start + 4)
+  if not value_start then
+    value_start = col
+  end
 
-  -- 閉じ引用符は自動ペアリングに委ねる
   local items = {}
   for _, name in ipairs(names) do
     table.insert(items, {
@@ -42,7 +54,7 @@ function M.trigger_port_completion()
     })
   end
 
-  vim.fn.complete(start + 1, items)
+  vim.fn.complete(value_start, items)
 end
 
 --- 補完セットアップ
