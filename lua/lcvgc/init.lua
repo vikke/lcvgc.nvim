@@ -4,7 +4,7 @@ local M = {}
 M.version = '0.5.0'
 
 local defaults = {
-  port = 9876,
+  port = 5555,
   log_path = '/tmp/lcvgc.log',
   auto_connect = false,
   auto_layout = false,
