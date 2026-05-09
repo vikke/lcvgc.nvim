@@ -65,8 +65,9 @@
 
 ;; ポート名
 (port_value) @string
+
 ;; includeパス
-(include_path) @string.special.path
+(include_stmt (include_path) @string.special.path)
 
 ;; コメント
 (comment) @comment
