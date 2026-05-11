@@ -115,11 +115,14 @@ describe('lcvgc.lsp.diagnostics', function()
     end)
   end)
 
-  describe('重複リクエスト排除', function()
-    it('pending中にupdateを呼ぶと2回目はスキップされる', function()
+  describe('連続呼び出し', function()
+    -- 旧挙動では `pending` フラグでスキップされていたが、レスポンスが届かない
+    -- ケースで永久ロックされるため、毎回 send するように変更した。
+    -- デバウンス (autocmd 側 150ms) で律速されるため連打問題は出ない。
+    it('handlerが未実行でも次のupdateは送信される（pendingロック回避）', function()
       local call_count = 0
       setup_connection_mock(true, function(_payload, _handler)
-        -- handlerを呼ばない（pendingのまま）
+        -- handlerをわざと呼ばない（旧実装ではここで pending ロックされていた）
         call_count = call_count + 1
         return true
       end)
@@ -127,8 +130,24 @@ describe('lcvgc.lsp.diagnostics', function()
 
       diagnostics.update(1)
       diagnostics.update(1)
+      diagnostics.update(1)
 
-      assert.are.equal(1, call_count)
+      assert.are.equal(3, call_count)
+    end)
+
+    it('send失敗後も次のupdateで再送される', function()
+      local call_count = 0
+      setup_connection_mock(true, function(_payload, _handler)
+        call_count = call_count + 1
+        -- send 失敗を模擬: handler は呼ばれず false を返す
+        return false
+      end)
+      diagnostics = reload_module('lcvgc.lsp.diagnostics')
+
+      diagnostics.update(1)
+      diagnostics.update(1)
+
+      assert.are.equal(2, call_count)
     end)
   end)
 
