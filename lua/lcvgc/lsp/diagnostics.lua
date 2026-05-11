@@ -10,9 +10,6 @@ local kinds = require('lcvgc.lsp.kinds')
 --- 診断用のnamespaceを作成
 local ns = vim.api.nvim_create_namespace('lcvgc_diagnostics')
 
---- pending フラグ（重複リクエスト排除用）
-local pending = false
-
 --- デーモンのレスポンスからvim.diagnostic形式に変換する
 --- @param items table[] デーモンが返す診断アイテムのリスト
 --- @return table[] vim.diagnostic形式の診断リスト
@@ -35,17 +32,22 @@ end
 --- デーモンから診断情報を取得してvim.diagnosticで表示する
 --- include解決はLua側で行い、include_sourcesとしてデーモンに送信する
 --- ファイル未検出などのinclude診断はLua側で生成し、デーモン応答とマージする
+---
+--- 以前は `pending` フラグで重複リクエストを抑止していたが、handler が呼ばれずに
+--- 終わるケース (送信失敗・デーモン切断等) で永久ロックされ「診断が消えない」
+--- 不具合の原因になっていた。デバウンス (autocmd 側 150ms) で律速されるため
+--- pending フラグは不要。
+---
+--- Previously a `pending` flag was used to dedupe in-flight requests, but if
+--- the handler was never invoked (send failure, daemon disconnect, etc.) the
+--- flag stayed `true` forever and diagnostics never updated again. Debouncing
+--- on the autocmd side (150 ms) already rate-limits requests, so dropping the
+--- flag is safe.
 --- @param bufnr number バッファ番号
 function M.update(bufnr)
   if not connection.is_connected() then
     return
   end
-
-  if pending then
-    return
-  end
-
-  pending = true
 
   local payload, include_diagnostics = request.build('lsp_diagnostics', bufnr, { offset = false })
   -- include先クリップ解決のためファイルパスを付与
@@ -53,8 +55,6 @@ function M.update(bufnr)
   payload.file_path = vim.api.nvim_buf_get_name(bufnr)
 
   connection.request(payload, function(msg)
-    pending = false
-
     if not msg.lsp or msg.lsp.type ~= 'diagnostics' then
       return false
     end
