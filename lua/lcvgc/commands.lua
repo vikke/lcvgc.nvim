@@ -143,7 +143,7 @@ function M.setup(opts)
     eval.eval_paragraph()
   end, { desc = 'lcvgc: eval paragraph' })
 
-  vim.keymap.set('n', '<C-S-e>', function()
+  vim.keymap.set('n', '<leader>e', function()
     eval.eval_file()
   end, { desc = 'lcvgc: eval file (with include expansion)' })
 end

@@ -187,6 +187,11 @@ The following key mappings are automatically set during setup().
 <C-e>   Visual mode                                 *lcvgc-eval-selection*
   Evaluates the selected range.
 
+<leader>e   Normal mode                              *lcvgc-eval-file*
+  Evaluates the entire file (with `include` expansion). Note: terminals
+  cannot distinguish <C-S-e> from <C-e>, so a |<Leader>| mapping is used
+  instead. |:LcvgcEvalFile| does the same.
+
 ==============================================================================
 LAYOUT                                                      *lcvgc-layout*
 
