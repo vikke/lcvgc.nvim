@@ -184,6 +184,11 @@ require('lcvgc').setup({opts})
 <C-e>   ビジュアルモード                            *lcvgc-eval-selection*
   選択範囲をevalする。
 
+<leader>e   ノーマルモード                          *lcvgc-eval-file*
+  ファイル全体を（`include` 展開込みで）evalする。注: 端末では <C-S-e> と
+  <C-e> を区別できないため |<Leader>| マップを使用している。
+  |:LcvgcEvalFile| でも同じ動作。
+
 ==============================================================================
 レイアウト                                            *lcvgc-ja-layout*
 
