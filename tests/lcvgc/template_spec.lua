@@ -107,5 +107,63 @@ describe("lcvgc.template", function()
       assert.is_truthy(text:find("use "), "'use' が含まれていません")
       assert.is_truthy(text:find("bars"), "'bars' が含まれていません")
     end)
+
+    -- インデントはタブを使う (lcvgc 全体の慣習)。スペースインデント
+    -- (`  port`, `    channel`) はテンプレートに含まれてはならない。
+    -- Indentation must be tabs (matches the lcvgc convention). Space
+    -- indentation (`  port`, `    channel`) must not appear in the template.
+    it("日本語テンプレートはタブでインデントされている", function()
+      template._get_lang = function() return "ja_JP.UTF-8" end
+      local lines = template.get_lines()
+
+      -- ブロック内の行 (例: `port IAC Driver`, `device my_synth`, `channel 1`)
+      -- が `\t` から始まり、スペース 2 個から始まる行が無いことを確認する。
+      local has_tab_indented = false
+      for _, line in ipairs(lines) do
+        if line:sub(1, 1) == "\t" then
+          has_tab_indented = true
+        end
+        -- スペース 2 個から始まる行は禁止 (= 旧インデント)
+        assert.is_falsy(
+          line:match("^  [^ ]"),
+          "スペース 2 個のインデントが残っている: '" .. line .. "'"
+        )
+      end
+      assert.is_true(has_tab_indented, "タブインデント行が 1 つも無い")
+    end)
+
+    it("英語テンプレートはタブでインデントされている", function()
+      template._get_lang = function() return "en_US.UTF-8" end
+      local lines = template.get_lines()
+
+      local has_tab_indented = false
+      for _, line in ipairs(lines) do
+        if line:sub(1, 1) == "\t" then
+          has_tab_indented = true
+        end
+        assert.is_falsy(
+          line:match("^  [^ ]"),
+          "2-space indentation found: '" .. line .. "'"
+        )
+      end
+      assert.is_true(has_tab_indented, "no tab-indented line found")
+    end)
+
+    -- kit などのネスト 2 段目はタブ 2 個でインデントされている。
+    -- Nested-2 indentation must be exactly two tabs.
+    it("kit 内のネスト 2 段目はタブ 2 個", function()
+      local lines = template.get_lines()
+      local found_double_tab = false
+      for _, line in ipairs(lines) do
+        if line:match("^\t\tchannel") or line:match("^\t\tnote") then
+          found_double_tab = true
+          break
+        end
+      end
+      assert.is_true(
+        found_double_tab,
+        "kit 内 (channel / note) のタブ 2 個インデントが見つからない"
+      )
+    end)
   end)
 end)
