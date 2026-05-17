@@ -5,6 +5,50 @@ local M = {}
 
 M._last_source_map = nil
 
+-- ブロックを開く予約語 (device|instrument|kit|clip|scene|session NAME [...] { ... })
+-- Block-opening keywords
+local BLOCK_KEYWORDS = {
+  device = true,
+  instrument = true,
+  kit = true,
+  clip = true,
+  scene = true,
+  session = true,
+}
+
+-- トップレベルの単独行ステートメント
+-- Top-level single-line statements
+local SINGLE_LINE_KEYWORDS = {
+  tempo = true,
+  scale = true,
+  include = true,
+  play = true,
+  stop = true,
+}
+
+-- 行コメント (//) を除去
+-- Strip // line comments
+local function strip_comment(line)
+  local idx = line:find('//', 1, true)
+  if idx then
+    return line:sub(1, idx - 1)
+  end
+  return line
+end
+
+-- 行頭の最初の識別子（予約語候補）を取得
+-- Return the leading identifier on the line, if any
+local function leading_keyword(line)
+  return strip_comment(line):match('^%s*([%a_][%w_]*)')
+end
+
+-- 行中の { } を順に列挙（コメント除去後）
+-- Iterate over braces on a line, after stripping comments
+local function iter_braces(line)
+  local stripped = strip_comment(line)
+  return stripped:gmatch('[{}]')
+end
+
 function M.read_file(path)
   local f = io.open(path, 'r')
   if not f then
@@ -102,32 +146,107 @@ function M.eval_selection()
   connection.send({ type = 'eval', source = text })
 end
 
-function M.eval_paragraph()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  local row = cursor[1]
-  local line_count = vim.api.nvim_buf_line_count(0)
-
-  local start_line = row
-  for i = row - 1, 1, -1 do
-    local line = vim.api.nvim_buf_get_lines(0, i - 1, i, false)[1]
-    if line:match('^%s*$') then
-      break
+-- start_row から } まで前向きにスキャンして閉じ位置を返す
+-- Forward-scan from start_row to find the matching closing brace
+local function scan_block_end(lines, start_row)
+  local depth = 0
+  local opened = false
+  for j = start_row, #lines do
+    for c in iter_braces(lines[j] or '') do
+      if c == '{' then
+        depth = depth + 1
+        opened = true
+      else
+        depth = depth - 1
+      end
     end
-    start_line = i
+    if opened and depth <= 0 then
+      return j
+    end
+  end
+  return nil
+end
+
+-- カーソル位置 (row, 1-indexed) を含む評価ブロックの (start, end) を返す。
+-- 評価ブロックは:
+--   1. device/instrument/kit/clip/scene/session のブロック全体（ヘッダ + プロパティ + 本体）
+--   2. トップレベルの単独行ステートメント (tempo / scale / include / play / stop)
+--
+-- Return the (start, end) range of the evaluation block containing row.
+-- An evaluation block is either:
+--   1. A full device/instrument/kit/clip/scene/session block (header + properties + body)
+--   2. A top-level single-line statement (tempo / scale / include / play / stop)
+function M.find_block_at_row(lines, row)
+  if row < 1 or row > #lines then
+    return nil
   end
 
-  local end_line = row
-  for i = row + 1, line_count do
-    local line = vim.api.nvim_buf_get_lines(0, i - 1, i, false)[1]
-    if line:match('^%s*$') then
-      break
+  -- カーソル行直前までのブレース深度と、深度0→1に遷移したブロック開始行を追跡
+  -- Track brace depth up to the cursor line and the row that opened the outermost block
+  local depth = 0
+  local block_start = nil
+  for i = 1, row - 1 do
+    for c in iter_braces(lines[i] or '') do
+      if c == '{' then
+        if depth == 0 then
+          block_start = i
+        end
+        depth = depth + 1
+      else
+        depth = depth - 1
+        if depth <= 0 then
+          depth = 0
+          block_start = nil
+        end
+      end
     end
-    end_line = i
   end
 
-  local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
-  local text = table.concat(lines, '\n')
-  flash.flash_range(0, start_line, end_line)
+  if depth > 0 and block_start then
+    local end_row = scan_block_end(lines, block_start)
+    if end_row then
+      return block_start, end_row
+    end
+    return nil
+  end
+
+  -- トップレベル: カーソル行の予約語で判定
+  -- Top level: dispatch by the leading keyword of the cursor line
+  local kw = leading_keyword(lines[row] or '')
+  if not kw then
+    return nil
+  end
+  if BLOCK_KEYWORDS[kw] then
+    local end_row = scan_block_end(lines, row)
+    if end_row then
+      return row, end_row
+    end
+    return nil
+  end
+  if SINGLE_LINE_KEYWORDS[kw] then
+    return row, row
+  end
+  return nil
+end
+
+function M.eval_block()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, line_count, false)
+
+  local start_line, end_line = M.find_block_at_row(lines, row)
+  if not start_line then
+    vim.notify('lcvgc: no block at cursor', vim.log.levels.WARN)
+    return
+  end
+
+  local block_lines = {}
+  for i = start_line, end_line do
+    table.insert(block_lines, lines[i])
+  end
+  local text = table.concat(block_lines, '\n')
+  flash.flash_range(bufnr, start_line, end_line)
   connection.send({ type = 'eval', source = text })
 end
 
