@@ -123,12 +123,12 @@ end
 | キー | モード | 動作 |
 |------|--------|------|
 | `Ctrl-E` | ビジュアル | 選択範囲をevalする |
-| `Ctrl-E` | ノーマル | 現在の段落（空行区切り）を自動選択してevalする |
+| `Ctrl-E` | ノーマル | カーソル位置の評価ブロック（device/instrument/kit/clip/scene/session の全体、またはトップレベル単独行 tempo/scale/include/play/stop）をevalする |
 | `Ctrl-Shift-E` | ノーマル | ファイル全体をeval（include展開 + ソースマップ付き） |
 
 ```lua
 vim.keymap.set('v', '<C-e>', function() M.eval_selection() end)
-vim.keymap.set('n', '<C-e>', function() M.eval_paragraph() end)
+vim.keymap.set('n', '<C-e>', function() M.eval_block() end)
 ```
 
 ---
@@ -146,15 +146,29 @@ function M.eval_selection()
 end
 ```
 
-### 5.2 段落のeval
+### 5.2 ブロックのeval
 
-空行で区切られたブロック（段落）を自動選択してevalする。
+カーソル位置を含む「評価ブロック」を自動選択してevalする。
+評価ブロックは以下のいずれかとして定義する:
+
+1. **トップレベルのブロック定義全体**: `device` / `instrument` / `kit` / `clip` / `scene` / `session` キーワードで始まる、ヘッダ・プロパティ（`[bars 4]` 等）・本体（`{ ... }`）すべてを含む単位。
+2. **トップレベルの単独行ステートメント**: `tempo` / `scale` / `include` / `play` / `stop` の1行。
+
+カーソルがブロック本体の中（`{` と `}` の間）にある場合は、その外側のブロック全体を1単位として送信する。これにより、ブロック内で削除された要素もエンジン側のツリーから取り除かれる（エンジンはブロック単位で完全置換するため、新しいソースに含まれない行は破棄される）。
+
+ブロック検出は `//` 行コメント中のブレースを無視する。閉じ `}` が見つからない場合、または評価ブロックの予約語が認識できない場合は eval せず通知のみ行う。
 
 ```lua
-function M.eval_paragraph()
-  vim.cmd('normal! vip')
-  M.eval_selection()
-  vim.cmd('normal! \027')  -- ESCでビジュアルモード解除
+function M.eval_block()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local s, e = M.find_block_at_row(lines, row)
+  if not s then
+    vim.notify('lcvgc: no block at cursor', vim.log.levels.WARN)
+    return
+  end
+  -- lines[s..e] を結合して送信
 end
 ```
 

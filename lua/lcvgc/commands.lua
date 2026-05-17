@@ -140,8 +140,8 @@ function M.setup(opts)
   end, { desc = 'lcvgc: eval selection' })
 
   vim.keymap.set('n', '<C-e>', function()
-    eval.eval_paragraph()
-  end, { desc = 'lcvgc: eval paragraph' })
+    eval.eval_block()
+  end, { desc = 'lcvgc: eval block (device/instrument/kit/clip/scene/session or top-level stmt)' })
 
   vim.keymap.set('n', '<leader>e', function()
     eval.eval_file()

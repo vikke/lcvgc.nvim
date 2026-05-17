@@ -123,12 +123,12 @@ end
 | Key | Mode | Action |
 |-----|------|--------|
 | `Ctrl-E` | Visual | Evaluate the selected range |
-| `Ctrl-E` | Normal | Automatically select and evaluate the current paragraph (delimited by blank lines) |
+| `Ctrl-E` | Normal | Evaluate the block at the cursor (a whole device/instrument/kit/clip/scene/session block, or a top-level single-line statement such as tempo/scale/include/play/stop) |
 | `Ctrl-Shift-E` | Normal | Evaluate entire file (with include expansion + source map) |
 
 ```lua
 vim.keymap.set('v', '<C-e>', function() M.eval_selection() end)
-vim.keymap.set('n', '<C-e>', function() M.eval_paragraph() end)
+vim.keymap.set('n', '<C-e>', function() M.eval_block() end)
 ```
 
 ---
@@ -146,15 +146,36 @@ function M.eval_selection()
 end
 ```
 
-### 5.2 Evaluating a Paragraph
+### 5.2 Evaluating a Block
 
-Automatically selects and evaluates a block (paragraph) delimited by blank lines.
+Automatically selects and evaluates the "evaluation block" that contains the cursor. An
+evaluation block is one of:
+
+1. **A full top-level block definition** — a `device` / `instrument` / `kit` / `clip` /
+   `scene` / `session` block, including its header, properties (e.g. `[bars 4]`), and body
+   (`{ ... }`).
+2. **A top-level single-line statement** — a single line starting with `tempo` / `scale` /
+   `include` / `play` / `stop`.
+
+When the cursor is inside a block body (between `{` and `}`), the surrounding block is
+sent as one unit. The engine treats this as a full replacement of the block, so any
+element removed from the source disappears from the engine's tree as well.
+
+Block detection ignores braces inside `//` line comments. When the closing `}` cannot be
+found, or the cursor line is neither a block opener nor a recognized single-line
+statement, no eval is sent and a warning is shown instead.
 
 ```lua
-function M.eval_paragraph()
-  vim.cmd('normal! vip')
-  M.eval_selection()
-  vim.cmd('normal! \027')  -- ESCでビジュアルモード解除
+function M.eval_block()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local s, e = M.find_block_at_row(lines, row)
+  if not s then
+    vim.notify('lcvgc: no block at cursor', vim.log.levels.WARN)
+    return
+  end
+  -- send lines[s..e] joined with "\n"
 end
 ```
 
