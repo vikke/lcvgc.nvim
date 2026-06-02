@@ -135,15 +135,15 @@ function M.setup(opts)
   end, {})
 
   -- キーマップ
-  vim.keymap.set('v', '<C-e>', function()
+  vim.keymap.set('v', '<C-e><C-e>', function()
     eval.eval_selection()
   end, { desc = 'lcvgc: eval selection' })
 
-  vim.keymap.set('n', '<C-e>', function()
+  vim.keymap.set('n', '<C-e><C-e>', function()
     eval.eval_block()
   end, { desc = 'lcvgc: eval block (device/instrument/kit/clip/scene/session or top-level stmt)' })
 
-  vim.keymap.set('n', '<leader>e', function()
+  vim.keymap.set('n', '<C-e><C-a>', function()
     eval.eval_file()
   end, { desc = 'lcvgc: eval file (with include expansion)' })
 end
