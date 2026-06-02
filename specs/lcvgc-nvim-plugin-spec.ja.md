@@ -122,13 +122,14 @@ end
 
 | キー | モード | 動作 |
 |------|--------|------|
-| `Ctrl-E` | ビジュアル | 選択範囲をevalする |
-| `Ctrl-E` | ノーマル | カーソル位置の評価ブロック（device/instrument/kit/clip/scene/session の全体、またはトップレベル単独行 tempo/scale/include/play/stop）をevalする |
-| `Ctrl-Shift-E` | ノーマル | ファイル全体をeval（include展開 + ソースマップ付き） |
+| `Ctrl-E Ctrl-E` | ビジュアル | 選択範囲をevalする |
+| `Ctrl-E Ctrl-E` | ノーマル | カーソル位置の評価ブロック（device/instrument/kit/clip/scene/session の全体、またはトップレベル単独行 tempo/scale/include/play/stop）をevalする |
+| `Ctrl-E Ctrl-A` | ノーマル | ファイル全体をeval（include展開 + ソースマップ付き） |
 
 ```lua
-vim.keymap.set('v', '<C-e>', function() M.eval_selection() end)
-vim.keymap.set('n', '<C-e>', function() M.eval_block() end)
+vim.keymap.set('v', '<C-e><C-e>', function() M.eval_selection() end)
+vim.keymap.set('n', '<C-e><C-e>', function() M.eval_block() end)
+vim.keymap.set('n', '<C-e><C-a>', function() M.eval_file() end)
 ```
 
 ---

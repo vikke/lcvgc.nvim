@@ -122,13 +122,14 @@ end
 
 | Key | Mode | Action |
 |-----|------|--------|
-| `Ctrl-E` | Visual | Evaluate the selected range |
-| `Ctrl-E` | Normal | Evaluate the block at the cursor (a whole device/instrument/kit/clip/scene/session block, or a top-level single-line statement such as tempo/scale/include/play/stop) |
-| `Ctrl-Shift-E` | Normal | Evaluate entire file (with include expansion + source map) |
+| `Ctrl-E Ctrl-E` | Visual | Evaluate the selected range |
+| `Ctrl-E Ctrl-E` | Normal | Evaluate the block at the cursor (a whole device/instrument/kit/clip/scene/session block, or a top-level single-line statement such as tempo/scale/include/play/stop) |
+| `Ctrl-E Ctrl-A` | Normal | Evaluate entire file (with include expansion + source map) |
 
 ```lua
-vim.keymap.set('v', '<C-e>', function() M.eval_selection() end)
-vim.keymap.set('n', '<C-e>', function() M.eval_block() end)
+vim.keymap.set('v', '<C-e><C-e>', function() M.eval_selection() end)
+vim.keymap.set('n', '<C-e><C-e>', function() M.eval_block() end)
+vim.keymap.set('n', '<C-e><C-a>', function() M.eval_file() end)
 ```
 
 ---
