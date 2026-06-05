@@ -118,6 +118,53 @@ function M.expand_includes(lines, filepath, base_dir, visited)
   return result, source_map, nil
 end
 
+--- トップレベルの play / stop 行を除外する純粋関数
+--- Pure function that strips top-level play / stop lines
+--- 接続時の自動 eval で再生制御を送らないために使う。
+--- インデントされた行（ブロック内）やコメント行 (// play ...) は除外しない。
+--- playback / stopwatch のような語頭一致は除外しない（play/stop の後は行末か空白）。
+--- @param lines string[] 入力行リスト（破壊しない）
+--- @return string[] play / stop 行を除いた新しい行リスト
+function M.strip_playback_controls(lines)
+  local result = {}
+  for _, line in ipairs(lines) do
+    -- 行頭インデントなしの play / stop（後続は行末または空白）のみ除外
+    if line:match('^play%s') or line == 'play'
+      or line:match('^stop%s') or line == 'stop' then
+      -- 再生制御行: 除外
+    else
+      table.insert(result, line)
+    end
+  end
+  return result
+end
+
+--- 接続時用: 現在のバッファを include 展開し、
+--- トップレベルの play / stop を除いた定義のみを eval 送信する
+--- Expands includes of the current buffer and sends only definitions
+--- (top-level play / stop lines are excluded) as an eval message.
+--- 接続しただけで勝手に再生・停止しないようにするため。
+--- @return nil
+function M.eval_definitions()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local filepath = vim.api.nvim_buf_get_name(bufnr)
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, line_count, false)
+  local base_dir = vim.fn.fnamemodify(filepath, ':h')
+
+  local expanded, source_map, err = M.expand_includes(lines, filepath, base_dir, {})
+  if err then
+    vim.notify('lcvgc: ' .. err, vim.log.levels.ERROR)
+    return
+  end
+
+  M._last_source_map = source_map
+  local filtered = M.strip_playback_controls(expanded)
+  local text = table.concat(filtered, '\n')
+  flash.flash_range(bufnr, 1, line_count)
+  connection.send({ type = 'eval', source = text })
+end
+
 function M.eval_file()
   local bufnr = vim.api.nvim_get_current_buf()
   local filepath = vim.api.nvim_buf_get_name(bufnr)
