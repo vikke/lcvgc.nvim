@@ -284,4 +284,92 @@ describe("lcvgc.eval", function()
       assert.is_nil(eval.find_block_at_row(lines, 3))
     end)
   end)
+
+  describe("strip_playback_controls", function()
+    it("トップレベルの play 行を除外する", function()
+      local lines = { "tempo 120", "play verse", "scale c minor" }
+      local result = eval.strip_playback_controls(lines)
+      assert.same({ "tempo 120", "scale c minor" }, result)
+    end)
+
+    it("トップレベルの stop 行を除外する", function()
+      local lines = { "tempo 120", "stop", "scale c minor" }
+      local result = eval.strip_playback_controls(lines)
+      assert.same({ "tempo 120", "scale c minor" }, result)
+    end)
+
+    it("引数付きの play / stop 行も除外する", function()
+      local lines = {
+        "play session my_song [repeat 2]",
+        "stop verse",
+        "tempo 120",
+      }
+      local result = eval.strip_playback_controls(lines)
+      assert.same({ "tempo 120" }, result)
+    end)
+
+    it("コメント行の play / stop は除外しない", function()
+      local lines = {
+        "// play verse",
+        "// stop",
+        "tempo 120",
+      }
+      local result = eval.strip_playback_controls(lines)
+      assert.same({ "// play verse", "// stop", "tempo 120" }, result)
+    end)
+
+    it("インデントされた play / stop（ブロック内）は除外しない", function()
+      local lines = {
+        "scene verse {",
+        "\tplay drums_a",
+        "\tstop bass_a",
+        "}",
+      }
+      local result = eval.strip_playback_controls(lines)
+      assert.same({ "scene verse {", "\tplay drums_a", "\tstop bass_a", "}" }, result)
+    end)
+
+    it("play / stop で始まる別の語（playback 等）は除外しない", function()
+      local lines = { "playback_mode on", "stopwatch 1", "tempo 120" }
+      local result = eval.strip_playback_controls(lines)
+      assert.same({ "playback_mode on", "stopwatch 1", "tempo 120" }, result)
+    end)
+
+    it("元のテーブルを破壊しない", function()
+      local lines = { "play verse", "tempo 120" }
+      eval.strip_playback_controls(lines)
+      assert.equals(2, #lines)
+      assert.equals("play verse", lines[1])
+    end)
+  end)
+
+  describe("eval_definitions", function()
+    it("include 展開し play/stop を除いて eval 送信する", function()
+      -- バッファ内容をモック
+      local buf_lines = {
+        "tempo 120",
+        "scene verse {",
+        "\tdrums_a",
+        "}",
+        "play verse",
+        "stop",
+      }
+      vim.api.nvim_buf_get_name = function() return "/mock/main.cvg" end
+      vim.api.nvim_buf_line_count = function() return #buf_lines end
+      vim.api.nvim_buf_get_lines = function() return buf_lines end
+
+      eval.eval_definitions()
+
+      assert.equals(1, #sent_messages)
+      assert.equals("eval", sent_messages[1].type)
+      -- play / stop は除外され、定義のみ送信される
+      local expected = table.concat({
+        "tempo 120",
+        "scene verse {",
+        "\tdrums_a",
+        "}",
+      }, "\n")
+      assert.equals(expected, sent_messages[1].source)
+    end)
+  end)
 end)

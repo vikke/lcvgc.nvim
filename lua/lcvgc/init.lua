@@ -1,7 +1,7 @@
 local M = {}
 
 --- プラグインバージョン
-M.version = '0.7.3'
+M.version = '0.8.0'
 
 local defaults = {
   port = 5555,
@@ -30,6 +30,13 @@ function M.setup(opts)
     local ok = connection.connect(opts.port, display.on_message)
     if ok then
       require('lcvgc.ports').fetch()
+      -- 接続成功時、現在のバッファが .cvg なら
+      -- include 展開した定義（play/stop は除外）を eval 送信する
+      -- On successful connect, eval the current .cvg buffer's
+      -- definitions (play/stop excluded) with includes expanded
+      if vim.bo.filetype == 'cvg' then
+        require('lcvgc.eval').eval_definitions()
+      end
     end
   end
 
