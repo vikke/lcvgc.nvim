@@ -2,7 +2,6 @@ local display = require('lcvgc.display')
 
 local M = {}
 
-local log_win = nil
 local log_buf = nil
 
 function M.setup(opts)
@@ -14,7 +13,6 @@ function M.setup(opts)
 
   -- 右に縦分割 → ログ用ターミナル
   vim.cmd('vsplit')
-  log_win = vim.api.nvim_get_current_win()
   vim.cmd('terminal tail -f ' .. vim.fn.shellescape(log_path))
   log_buf = vim.api.nvim_get_current_buf()
   vim.bo[log_buf].buflisted = false

@@ -12,6 +12,7 @@ License: MIT
   設定 .................................... |lcvgc-ja-configuration|
   コマンド ................................ |lcvgc-ja-commands|
   キーマップ .............................. |lcvgc-ja-mappings|
+  MIDI入力 ................................ |lcvgc-ja-midi-in|
   レイアウト .............................. |lcvgc-ja-layout|
   カラースキーム .......................... |lcvgc-ja-colors|
   Tree-sitter ............................. |lcvgc-ja-treesitter|
@@ -173,6 +174,14 @@ require('lcvgc').setup({opts})
 :LcvgcMicStop                                            *:LcvgcMicStop*
   マイク入力を停止する。
 
+:LcvgcMidiInSubscribe [{port}]                    *:LcvgcMidiInSubscribe*
+  MIDI入力イベントの購読を開始する。鍵盤を弾くと演奏内容がDSLトークン
+  （例 c:4）としてカーソル位置に挿入される。{port}を省略すると、入力
+  ポート一覧から |vim.ui.select| で選択する。詳細は |lcvgc-ja-midi-in|。
+
+:LcvgcMidiInUnsubscribe                         *:LcvgcMidiInUnsubscribe*
+  MIDI入力イベントの購読を解除する。未購読でも安全に呼べる。
+
 ==============================================================================
 キーマップ                                            *lcvgc-ja-mappings*
 
@@ -188,6 +197,33 @@ require('lcvgc').setup({opts})
   ファイル全体を（`include` 展開込みで）evalする。注: 端末では <C-S-e> と
   <C-e> を区別できないため |<Leader>| マップを使用している。
   |:LcvgcEvalFile| でも同じ動作。
+
+<C-e><C-r>   ノーマルモード                     *lcvgc-ja-midi-in-toggle*
+  MIDI入力購読のオン/オフをトグルする。未購読なら入力ポートを選んで
+  購読を開始し、購読中なら解除する。詳細は |lcvgc-ja-midi-in|。
+
+==============================================================================
+MIDI入力                                            *lcvgc-ja-midi-in*
+
+lcvgcデーモンにMIDI入力デバイス（鍵盤等）を繋ぎ、演奏した音をそのまま
+DSL文法でバッファに書き込める。
+
+仕組み:~
+
+  1. |:LcvgcMidiInSubscribe| で入力ポートを購読する。プラグインはデーモンへ
+     `subscribe_midi_in` メッセージを送り、成否を |vim.notify| で通知する。
+  2. 鍵盤を弾くと、デーモンが `midi_in_event` をプッシュで送ってくる。
+     1発音が1トークン（`name:octave` 形式、例 MIDI 60 = `c:4`）。
+  3. 受信したトークンはカーソル位置にスペース区切りで挿入される
+     （例: c:4 e:4 g:4）。
+  4. |:LcvgcMidiInUnsubscribe| または |lcvgc-ja-midi-in-toggle| で解除する。
+
+NoteOff・velocity 0 のNoteOn・CC・Program・System Real-Timeはイベント化
+されない（鍵盤を弾いた発音だけが届く）。
+
+購読中はデーモンが任意のタイミングで電文を送るため、エンジンとの接続を
+維持する必要がある。1接続につき購読は1つで、再購読すると張り替わる。
+購読はNeovim終了時（VimLeavePre）に自動解除される。
 
 ==============================================================================
 レイアウト                                            *lcvgc-ja-layout*

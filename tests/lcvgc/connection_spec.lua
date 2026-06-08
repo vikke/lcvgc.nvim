@@ -99,6 +99,66 @@ describe("lcvgc.connection", function()
     end)
   end)
 
+  describe("on_event", function()
+    it("midi_in_event を登録ハンドラにディスパッチする", function()
+      vim.fn.sockconnect = function() return 42 end
+      connection = reload_module("lcvgc.connection")
+      local events = {}
+      local fallthrough = {}
+      connection.on_event("midi_in_event", function(msg) table.insert(events, msg) end)
+      connection.connect(5555, function(msg) table.insert(fallthrough, msg) end)
+
+      connection._on_data({ '{"type":"midi_in_event","dsl":"c:4","note":60}\n' })
+      assert.equals(1, #events)
+      assert.equals("c:4", events[1].dsl)
+      -- on_message_cb には渡らない（push 専用ディスパッチ）
+      assert.equals(0, #fallthrough)
+
+      vim.fn.sockconnect = function() return 0 end
+    end)
+
+    it("イベントはリクエスト応答ハンドラに消費されない", function()
+      vim.fn.sockconnect = function() return 42 end
+      connection = reload_module("lcvgc.connection")
+      local events = {}
+      connection.on_event("midi_in_event", function(msg) table.insert(events, msg) end)
+      connection.connect(5555, function() end)
+
+      local responses = {}
+      connection.request({ type = "ping" }, function(msg)
+        table.insert(responses, msg)
+        return true
+      end)
+
+      -- 先にイベント（push）が届いても応答ハンドラは残る
+      connection._on_data({ '{"type":"midi_in_event","dsl":"e:4"}\n' })
+      assert.equals(1, #events)
+      assert.equals(0, #responses)
+
+      -- 続いて本来の応答（success 付き）が届けば応答ハンドラが処理する
+      connection._on_data({ '{"success":true}\n' })
+      assert.equals(1, #responses)
+
+      vim.fn.sockconnect = function() return 0 end
+    end)
+
+    it("分割されたイベント行をバッファリングして結合する", function()
+      vim.fn.sockconnect = function() return 42 end
+      connection = reload_module("lcvgc.connection")
+      local events = {}
+      connection.on_event("midi_in_event", function(msg) table.insert(events, msg) end)
+      connection.connect(5555, function() end)
+
+      connection._on_data({ '{"type":"midi_in_event","ds' })
+      assert.equals(0, #events)
+      connection._on_data({ 'l":"g:4"}\n' })
+      assert.equals(1, #events)
+      assert.equals("g:4", events[1].dsl)
+
+      vim.fn.sockconnect = function() return 0 end
+    end)
+  end)
+
   describe("disconnect", function()
     it("接続中なら切断して状態をリセットする", function()
       vim.fn.sockconnect = function() return 42 end

@@ -81,7 +81,7 @@ function M._resolve_recursive(lines, base_dir, visited, include_sources, diagnos
 
         -- ファイル読み込み
         -- Read file
-        local inc_lines, err = eval.read_file(full_path)
+        local inc_lines = eval.read_file(full_path)
         if not inc_lines then
           -- ファイル未検出診断を追加
           -- Add file-not-found diagnostic

@@ -50,6 +50,32 @@ describe("lcvgc.ports", function()
     end)
   end)
 
+  describe("get_input_ports", function()
+    it("direction=in のポートのみ返す", function()
+      ports._handle_response({
+        ports = {
+          { name = "Launchkey", direction = "in" },
+          { name = "IAC Driver Bus 1", direction = "out" },
+          { name = "Keystep", direction = "in" },
+        },
+      })
+      assert.same({ "Launchkey", "Keystep" }, ports.get_input_ports())
+    end)
+
+    it("キャッシュが空の場合は空テーブルを返す", function()
+      assert.same({}, ports.get_input_ports())
+    end)
+
+    it("direction=in がない場合は空テーブルを返す", function()
+      ports._handle_response({
+        ports = {
+          { name = "IAC Driver Bus 1", direction = "out" },
+        },
+      })
+      assert.same({}, ports.get_input_ports())
+    end)
+  end)
+
   describe("clear_cache", function()
     it("キャッシュをクリアする", function()
       ports._handle_response({
@@ -88,6 +114,22 @@ describe("lcvgc.ports", function()
       ports.fetch()
       assert.equals(1, #sent)
       assert.equals("list_ports", sent[1].type)
+
+      vim.fn.sockconnect = function() return 0 end
+    end)
+
+    it("応答受信後にコールバックを呼ぶ", function()
+      local connection = reload_module("lcvgc.connection")
+      vim.fn.sockconnect = function() return 42 end
+      connection.connect(5555, function() end)
+
+      local called = false
+      ports.fetch(function() called = true end)
+      assert.is_false(called)
+
+      connection._on_data({ '{"ports":[{"name":"Launchkey","direction":"in"}]}\n' })
+      assert.is_true(called)
+      assert.same({ "Launchkey" }, ports.get_input_ports())
 
       vim.fn.sockconnect = function() return 0 end
     end)

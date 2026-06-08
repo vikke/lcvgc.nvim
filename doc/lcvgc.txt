@@ -12,6 +12,7 @@ CONTENTS                                                    *lcvgc-contents*
   Configuration ........................... |lcvgc-configuration|
   Commands ................................ |lcvgc-commands|
   Mappings ................................ |lcvgc-mappings|
+  MIDI Input .............................. |lcvgc-midi-in|
   Layout .................................. |lcvgc-layout|
   Color Scheme ............................ |lcvgc-colors|
   Tree-sitter ............................. |lcvgc-treesitter|
@@ -175,6 +176,15 @@ COMMANDS                                                  *lcvgc-commands*
 :LcvgcMicStop                                            *:LcvgcMicStop*
   Stop microphone input.
 
+:LcvgcMidiInSubscribe [{port}]                    *:LcvgcMidiInSubscribe*
+  Start subscribing to MIDI input events. When you play the keyboard, the
+  performance is inserted at the cursor as DSL tokens (e.g. c:4). If {port}
+  is omitted, choose from the list of input ports via |vim.ui.select|. See
+  |lcvgc-midi-in| for details.
+
+:LcvgcMidiInUnsubscribe                         *:LcvgcMidiInUnsubscribe*
+  Unsubscribe from MIDI input events. Safe to call even when not subscribed.
+
 ==============================================================================
 MAPPINGS                                                  *lcvgc-mappings*
 
@@ -190,6 +200,36 @@ The following key mappings are automatically set during setup().
 <C-e><C-a>   Normal mode                                 *lcvgc-eval-file*
   Evaluates the entire file (with `include` expansion).
   |:LcvgcEvalFile| does the same.
+
+<C-e><C-r>   Normal mode                            *lcvgc-midi-in-toggle*
+  Toggles the MIDI input subscription on and off. If not subscribed, it
+  picks an input port and starts subscribing; if subscribed, it
+  unsubscribes. See |lcvgc-midi-in| for details.
+
+==============================================================================
+MIDI INPUT                                                  *lcvgc-midi-in*
+
+Connect a MIDI input device (such as a keyboard) to the lcvgc daemon and
+write the notes you play directly into the buffer as DSL syntax.
+
+How it works:~
+
+  1. Subscribe to an input port with |:LcvgcMidiInSubscribe|. The plugin
+     sends a `subscribe_midi_in` message to the daemon and reports the
+     result via |vim.notify|.
+  2. When you play the keyboard, the daemon pushes a `midi_in_event`. Each
+     note is a single token (in `name:octave` form, e.g. MIDI 60 = `c:4`).
+  3. Received tokens are inserted at the cursor, space-separated
+     (e.g. c:4 e:4 g:4).
+  4. Unsubscribe with |:LcvgcMidiInUnsubscribe| or |lcvgc-midi-in-toggle|.
+
+NoteOff, NoteOn with velocity 0, CC, Program, and System Real-Time messages
+are not turned into events (only the notes you play on the keyboard arrive).
+
+While subscribed, the daemon sends lines at arbitrary times, so the
+connection to the engine must be kept alive. There is one subscription per
+connection; re-subscribing replaces it. The subscription is automatically
+released when Neovim exits (VimLeavePre).
 
 ==============================================================================
 LAYOUT                                                      *lcvgc-layout*

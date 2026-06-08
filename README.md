@@ -119,6 +119,23 @@ When nvim-cmp is not installed, fallback completion via `vim.fn.complete()` is u
 |--------|---------|-------------|
 | `debounce` | `150` | Delay before showing completions (milliseconds) |
 
+## MIDI Input (Inserting Keyboard Performance into the Buffer)
+
+Connect a MIDI input device (such as a keyboard) to the lcvgc daemon and write the notes you play directly into the buffer as DSL syntax.
+
+```vim
+" Pick an input port and start subscribing (when port is omitted, choose via vim.ui.select)
+:LcvgcMidiInSubscribe
+
+" Unsubscribe
+:LcvgcMidiInUnsubscribe
+```
+
+- In normal mode, `<C-e><C-r>` toggles the subscription on and off.
+- When you play the keyboard, the daemon pushes a `midi_in_event`, and each note is inserted at the cursor as a single token (in `name:octave` form, e.g. MIDI 60 = `c:4`), space-separated (e.g. `c:4 e:4 g:4`).
+- NoteOff, NoteOn with velocity 0, CC, Program, and System Real-Time messages are not turned into events (only the notes you play on the keyboard arrive).
+- There is one subscription per connection; re-subscribing replaces it. It is automatically unsubscribed when Neovim exits.
+
 ## Developer Configuration
 
 To load the plugin from local source (for plugin development), you can control lazy.nvim's dev mode via environment variables.
