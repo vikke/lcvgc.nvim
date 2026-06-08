@@ -1,7 +1,7 @@
 local M = {}
 
 --- プラグインバージョン
-M.version = '0.8.0'
+M.version = '0.9.0'
 
 local defaults = {
   port = 5555,
@@ -20,6 +20,7 @@ function M.setup(opts)
   require('lcvgc.colors').setup()
   require('lcvgc.commands').setup(opts)
   require('lcvgc.lsp').setup(opts)
+  require('lcvgc.midi_in').setup()
 
   require('lcvgc.completion').setup()
   require('lcvgc.cmp_source').setup(opts)

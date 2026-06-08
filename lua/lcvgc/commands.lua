@@ -141,6 +141,21 @@ function M.setup(opts)
     end
   end, {})
 
+  -- MIDI 入力イベントの購読: 鍵盤の演奏を DSL トークンとしてバッファに挿入する
+  -- Subscribe to MIDI input events: inserts played notes as DSL tokens
+  vim.api.nvim_create_user_command('LcvgcMidiInSubscribe', function(cmd)
+    local midi_in = require('lcvgc.midi_in')
+    if cmd.args and cmd.args ~= '' then
+      midi_in.subscribe(cmd.args)
+    else
+      midi_in.subscribe_interactive()
+    end
+  end, { nargs = '?' })
+
+  vim.api.nvim_create_user_command('LcvgcMidiInUnsubscribe', function()
+    require('lcvgc.midi_in').unsubscribe()
+  end, {})
+
   -- キーマップ
   vim.keymap.set('v', '<C-e><C-e>', function()
     eval.eval_selection()
@@ -153,6 +168,12 @@ function M.setup(opts)
   vim.keymap.set('n', '<C-e><C-a>', function()
     eval.eval_file()
   end, { desc = 'lcvgc: eval file (with include expansion)' })
+
+  -- MIDI 入力購読のオン/オフをトグル
+  -- Toggle MIDI-in subscription on/off
+  vim.keymap.set('n', '<C-e><C-r>', function()
+    require('lcvgc.midi_in').toggle()
+  end, { desc = 'lcvgc: toggle MIDI-in subscription' })
 end
 
 return M

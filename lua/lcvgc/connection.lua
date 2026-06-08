@@ -4,6 +4,11 @@ local handle = 0
 local recv_buf = ''
 local on_message_cb = nil
 local response_handlers = {}
+-- サーバー起点の push イベント用ハンドラ (type 名 -> 関数)。
+-- 再接続をまたいで保持する（setup 時に一度だけ登録される想定）。
+-- Handlers for server-initiated push events (type name -> fn).
+-- Kept across reconnects (registered once at setup time).
+local event_handlers = {}
 
 function M.connect(port, on_message)
   port = port or 5555
@@ -57,6 +62,16 @@ function M.request(payload, handler)
   return M.send(payload)
 end
 
+--- サーバー起点の push イベント（midi_in_event 等）のハンドラを登録する。
+--- リクエストを伴わずに届く電文を type 名でディスパッチするために使う。
+--- Register a handler for a server-initiated push event (e.g. midi_in_event).
+--- Used to dispatch lines that arrive without a preceding request, keyed by type.
+--- @param type_name string イベントの type 名 / the event's type name
+--- @param handler fun(msg: table) 受信時に呼ばれる関数 / called on receipt
+function M.on_event(type_name, handler)
+  event_handlers[type_name] = handler
+end
+
 function M.is_connected()
   return handle ~= 0
 end
@@ -75,6 +90,14 @@ function M._on_data(data)
       local ok, msg = pcall(vim.fn.json_decode, line)
       if ok then
         vim.schedule(function()
+          -- サーバー起点の push イベント（type 付き・success なし）を優先的に
+          -- ディスパッチする。リクエスト応答キューには載せない。
+          -- Dispatch server-initiated push events (have `type`, no `success`)
+          -- first; they must not be consumed by the request/response queue.
+          if msg.type and event_handlers[msg.type] then
+            event_handlers[msg.type](msg)
+            return
+          end
           local handled = false
           for i = #response_handlers, 1, -1 do
             if response_handlers[i](msg) then
