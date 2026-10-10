@@ -66,7 +66,13 @@ vim_mock.fn = {
     if ok then return cjson.decode(s) end
     -- フォールバック: dkjson
     local ok2, dkjson = pcall(require, "dkjson")
-    if ok2 then return dkjson.decode(s) end
+    if ok2 then
+      -- dkjson は不正 JSON で nil を返すため、vim.fn.json_decode と同様に error にする
+      -- dkjson returns nil on invalid JSON; raise like vim.fn.json_decode does
+      local obj, _, err = dkjson.decode(s)
+      if obj == nil and err then error(err) end
+      return obj
+    end
     error("No JSON decoder available")
   end,
 }
