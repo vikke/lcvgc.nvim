@@ -90,7 +90,7 @@ tree-sitter highlight example.cvg
 
 - トップレベル: `device`, `instrument`, `kit`, `clip`, `scene`, `session`, `include`, `tempo`, `scale`, `play`, `stop`
 - ブロック構造: `名前 { ... }`
-- clipヘッダ: `clip name [bars N] [time 4/4] [scale c major] { ... }`
+- clipヘッダ: `clip name [bars N] [time 4/4] [scale c_major] { ... }`
 - ドラム記法: ステップシーケンサーパターン (`x.oX|`)
 - 音程楽器記法: `音名:オクターブ:音長` (例: `c:4:8`, `eb:3:4.`)
 - コード記法: `[c e g]`, コード名 (`cm7`, `fmaj7`)

@@ -422,6 +422,7 @@ vim.filetype.add({
 `lcvgc-mic` 外部バイナリをジョブとして起動し、stdout出力をバッファに挿入する。カーソル位置のclipに `[scale ...]` が指定されている場合、`--key` と `--scale` を自動で付与する。clipレベルのscaleがない場合はグローバルの `scale` 設定にフォールバックする。
 
 ```lua
+local scale_parser = require('lcvgc.scale')
 local mic_job = nil
 
 -- カーソル位置のclipからscale情報を取得
@@ -431,9 +432,10 @@ local function get_clip_scale()
   local row = vim.api.nvim_win_get_cursor(0)[1]
   for i = row, 1, -1 do
     local line = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, false)[1]
-    local root, scale_type = line:match('%[scale%s+(%S+)%s+(%S+)%]')
-    if root and scale_type then
-      return { root = root, type = scale_type }
+    -- `[scale <root>_<type>]` を lcvgc.scale で分解（最初の `_` で分割）
+    local clip_scale = scale_parser.from_clip_header(line)
+    if clip_scale then
+      return clip_scale
     end
     -- clipブロックの外に出たら探索打ち切り
     if line:match('^%s*clip%s') or line:match('^%s*scene%s') or line:match('^%s*session%s') then
@@ -443,9 +445,9 @@ local function get_clip_scale()
   -- clipレベルのscaleが見つからない場合、グローバルscaleを探す
   for i = 1, vim.api.nvim_buf_line_count(bufnr) do
     local line = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, false)[1]
-    local root, scale_type = line:match('^%s*scale%s+(%S+)%s+(%S+)')
-    if root and scale_type then
-      return { root = root, type = scale_type }
+    local global_scale = scale_parser.from_global_line(line)
+    if global_scale then
+      return global_scale
     end
   end
   return nil
@@ -682,8 +684,7 @@ nvim-cmp が未インストールの環境では `TextChangedI` autocmd + `vim.f
 | `[` の後 | `bars`, `time`, `scale` | — |
 | `[bars ` の後 | (数値) | 小節数 |
 | `[time ` の後 | `3/4`, `4/4`, `5/4`, `6/8`, `7/8` | 拍子 |
-| `[scale ` の後 | `c`, `c#`, `db`, ..., `b` | スケールのルート音 |
-| `[scale C ` の後 | `major`, `minor`, `harmonic_minor`, `melodic_minor`, `dorian`, `phrygian`, `lydian`, `mixolydian`, `locrian` | スケールタイプ |
+| `[scale ` の後 | `c_major`, `cs_minor`, `eb_harmonic_minor`, ... （音名17種 `c cs db d ds eb e f fs gb g gs ab a as bb b` × 種別9種 = 153件の `<root>_<type>`） | スケール（例: `C# ナチュラルマイナー`） |
 
 #### clip (ドラム記法)
 
@@ -749,8 +750,9 @@ nvim-cmp が未インストールの環境では `TextChangedI` autocmd + `vim.f
 
 | カーソル位置 | 補完 | ヒント |
 |-------------|------|--------|
-| `scale ` の後 | `c`, `c#`, `db`, ..., `b` | スケールのルート音 |
-| `scale c ` の後 | `major`, `minor`, `harmonic_minor`, `melodic_minor`, `dorian`, `phrygian`, `lydian`, `mixolydian`, `locrian` | スケールタイプ |
+| `scale ` の後 | `c_major`, `cs_minor`, `eb_harmonic_minor`, ... （`[scale ` と同じ153件） | スケール |
+
+scale は `<root>_<type>` の単一トークンで記述する（旧形式 `scale c major` は構文エラー）。シャープは `cs`/`c#` どちらでも書けるが、補完候補は `s` 形式のみ。
 
 グローバルの `scale` はclipの `[scale ...]` が未指定の場合に適用される。clipレベルの指定で上書き可能。
 

@@ -429,6 +429,7 @@ vim.filetype.add({
 Launches the `lcvgc-mic` external binary as a job and inserts its stdout output into the buffer. If the clip at the cursor position has `[scale ...]` specified, `--key` and `--scale` are automatically appended. Falls back to the global `scale` setting if no clip-level scale is found.
 
 ```lua
+local scale_parser = require('lcvgc.scale')
 local mic_job = nil
 
 -- カーソル位置のclipからscale情報を取得
@@ -438,9 +439,10 @@ local function get_clip_scale()
   local row = vim.api.nvim_win_get_cursor(0)[1]
   for i = row, 1, -1 do
     local line = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, false)[1]
-    local root, scale_type = line:match('%[scale%s+(%S+)%s+(%S+)%]')
-    if root and scale_type then
-      return { root = root, type = scale_type }
+    -- `[scale <root>_<type>]` を lcvgc.scale で分解（最初の `_` で分割）
+    local clip_scale = scale_parser.from_clip_header(line)
+    if clip_scale then
+      return clip_scale
     end
     -- clipブロックの外に出たら探索打ち切り
     if line:match('^%s*clip%s') or line:match('^%s*scene%s') or line:match('^%s*session%s') then
@@ -450,9 +452,9 @@ local function get_clip_scale()
   -- clipレベルのscaleが見つからない場合、グローバルscaleを探す
   for i = 1, vim.api.nvim_buf_line_count(bufnr) do
     local line = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, false)[1]
-    local root, scale_type = line:match('^%s*scale%s+(%S+)%s+(%S+)')
-    if root and scale_type then
-      return { root = root, type = scale_type }
+    local global_scale = scale_parser.from_global_line(line)
+    if global_scale then
+      return global_scale
     end
   end
   return nil
@@ -689,8 +691,7 @@ In the tables below, "Completion" refers to items displayed as selectable candid
 | After `[` | `bars`, `time`, `scale` | — |
 | After `[bars ` | (numeric) | Number of bars |
 | After `[time ` | `3/4`, `4/4`, `5/4`, `6/8`, `7/8` | Time signature |
-| After `[scale ` | `c`, `c#`, `db`, ..., `b` | Scale root note |
-| After `[scale C ` | `major`, `minor`, `harmonic_minor`, `melodic_minor`, `dorian`, `phrygian`, `lydian`, `mixolydian`, `locrian` | Scale type |
+| After `[scale ` | `c_major`, `cs_minor`, `eb_harmonic_minor`, ... (153 `<root>_<type>` items: 17 pitch names `c cs db d ds eb e f fs gb g gs ab a as bb b` × 9 types) | Scale (e.g. `C# ナチュラルマイナー`) |
 
 #### clip (Drum Notation)
 
@@ -756,8 +757,9 @@ In the tables below, "Completion" refers to items displayed as selectable candid
 
 | Cursor Position | Completion | Hint |
 |-----------------|------------|------|
-| After `scale ` | `c`, `c#`, `db`, ..., `b` | Scale root note |
-| After `scale c ` | `major`, `minor`, `harmonic_minor`, `melodic_minor`, `dorian`, `phrygian`, `lydian`, `mixolydian`, `locrian` | Scale type |
+| After `scale ` | `c_major`, `cs_minor`, `eb_harmonic_minor`, ... (same 153 items as `[scale `) | Scale |
+
+A scale is written as a single `<root>_<type>` token (the legacy `scale c major` form is a syntax error). Sharps may be written as `cs` or `c#`, but completion offers only the `s` form.
 
 The global `scale` is applied when a clip's `[scale ...]` is not specified. Can be overridden by clip-level specification.
 
