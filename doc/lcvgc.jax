@@ -48,7 +48,7 @@ lcvgcエンジンはデーモンとして独立起動する。Neovimプラグイ
 
 - Neovim 0.10 以上
 - lcvgcエンジン（別途インストール）
-- Tree-sitterハイライトを使う場合: nvim-treesitter
+- Tree-sitterハイライトを使う場合: nvim-treesitter（`master`/`main` ブランチ）
 
 ==============================================================================
 インストール                                        *lcvgc-ja-installation*
@@ -278,22 +278,38 @@ setup()時に自動的にハイライトグループが設定される。
 ==============================================================================
 Tree-sitter                                          *lcvgc-ja-treesitter*
 
-lcvgcのDSL用にTree-sitter grammarが同梱されている。
+`.cvg` ファイルのシンタックスハイライトには、tree-sitter-cvg パーサー
+(https://github.com/vikke/tree-sitter-cvg) と、本プラグインに同梱の
+ハイライトクエリを使用する。
 
 tree-sitter-cvg のインストール:~
 
-nvim-treesitterを使用している場合、パーサーの登録が必要:
->lua
-  local parser_config = require('nvim-treesitter.parsers').get_parser_configs()
-  parser_config.cvg = {
-    install_info = {
-      url = '/path/to/lcvgc.nvim/tree-sitter-cvg',
-      files = { 'src/parser.c' },
-    },
-    filetype = 'cvg',
-  }
+nvim-treesitter が導入されていれば、setup() 時に cvg パーサーが自動登録
+されるため、追加の設定は不要。nvim-treesitter の `master` / `main`
+どちらのブランチにも対応している。パーサーは以下でインストールする:
+>vim
+  :TSInstall cvg
 <
-その後 `:TSInstall cvg` でパーサーをビルドする。
+lcvgc.nvim を遅延ロードしている場合（|lcvgc-ja-installation| の
+lazy.nvim の例など）、プラグインがロードされるまでパーサーは登録されない。
+`.cvg` ファイルを開いて lcvgc.nvim がロードされた後に `:TSInstall cvg` を
+実行する。
+
+パーサーのビルドには C コンパイラが必要。nvim-treesitter の `main`
+ブランチでは `tree-sitter` CLI も必要。
+
+tree-sitter-cvg の更新:~
+
+パーサーを最新版に更新するには、再インストールする:
+>vim
+  :TSInstall! cvg
+<
+`main` ブランチではパーサーの revision を固定していないため、
+`:TSUpdate` では cvg は更新されない。
+
+`cvg` バッファのハイライトは |FileType| autocmd で自動的に開始される。
+nvim-treesitter がハイライトを自動で有効にしない `main` ブランチでも、
+追加の設定は不要。
 
 ==============================================================================
 LSP連携                                                  *lcvgc-ja-lsp*
