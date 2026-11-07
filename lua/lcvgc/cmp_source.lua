@@ -136,8 +136,28 @@ function include_source:complete(params, callback)
   end
 end
 
+--- CVG ファイル用の nvim-cmp comparators を返す
+--- nvim-cmp 既定の並びから sort_text を score の前へ移し、
+--- デーモンが決めた並び順（構成音 → ダイアトニック → 単音 → 全コード名）を優先する。
+--- @param compare table cmp.config.compare（比較関数の集合）
+--- @return table comparators の配列
+local function cvg_comparators(compare)
+  return {
+    compare.offset,
+    compare.exact,
+    compare.sort_text,
+    compare.score,
+    compare.recently_used,
+    compare.locality,
+    compare.kind,
+    compare.length,
+    compare.order,
+  }
+end
+
 --- nvim-cmp にソースを登録する
---- CVG ファイルでは preselect を無効化し、Enter は明示選択時のみ確定する
+--- CVG ファイルでは preselect を無効化し、Enter は明示選択時のみ確定する。
+--- 並び順はデーモンの sortText を優先する。
 --- @param opts table|nil プラグイン設定（opts.debounce で補完遅延を指定）
 function M.setup(opts)
   local ok, cmp = pcall(require, 'cmp')
@@ -162,6 +182,9 @@ function M.setup(opts)
     }),
     performance = {
       debounce = debounce,
+    },
+    sorting = {
+      comparators = cvg_comparators(cmp.config.compare),
     },
     sources = {
       { name = 'lcvgc_include' },

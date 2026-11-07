@@ -29,8 +29,9 @@ function source:get_debug_name()
 end
 
 --- LSPレスポンスのアイテムをnvim-cmp形式に変換する
+--- デーモンの sort_text は nvim-cmp の sortText に渡す（無い候補では nil）。
 --- @param items table デーモンが返すアイテム配列
---- @return table nvim-cmp形式のアイテム配列
+--- @return table nvim-cmp形式のアイテム配列（label / kind / detail / sortText）
 local function convert_items(items)
   local result = {}
   for _, item in ipairs(items) do
@@ -38,6 +39,7 @@ local function convert_items(items)
       label = item.label,
       kind = kinds.completion_kind(item.kind),
       detail = item.detail,
+      sortText = item.sort_text,
     })
   end
   return result

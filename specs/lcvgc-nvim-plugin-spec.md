@@ -636,6 +636,14 @@ The following `cmp.setup.filetype` settings are applied for CVG files to prevent
 - `<CR>` uses `cmp.mapping.confirm({ select = false })` — Enter only confirms a candidate when explicitly selected via `C-n` / `C-p`. Pressing Enter without selecting a candidate inserts a normal newline
 - `performance.debounce` — Delay before showing completions (default 150ms, configurable via `opts.debounce`)
 
+#### Completion Candidate Order
+
+The daemon's `lsp.items[].sort_text` is passed to nvim-cmp as `sortText` (omitted when absent). For CVG files, `sorting.comparators` is set to the following order so that `sort_text` takes precedence over `score`. As a result, inside a clip, candidates are ordered as: scale tones → diatonic chords → single notes → chord names (every root × every quality).
+
+`offset` → `exact` → `sort_text` → `score` → `recently_used` → `locality` → `kind` → `length` → `order`
+
+(This is nvim-cmp's default order with `sort_text` moved before `score`. Files other than CVG are not affected.)
+
 When nvim-cmp is not installed, fallback completion via `TextChangedI` autocmd + `vim.fn.complete()` is used.
 
 ### Context-Dependent Completion and Hint Table
@@ -708,7 +716,7 @@ In the tables below, "Completion" refers to items displayed as selectable candid
 
 | Cursor Position | Completion | Hint |
 |-----------------|------------|------|
-| After instrument name | `c`, `c#`, `db`, ..., `b`, `r`, `[`, `(`, `>`, chord name | Note name / rest / chord / repeat / chord name |
+| After instrument name | `c`, `cs`, `db`, ..., `b`, `r`, `[`, `(`, `>`, chord name (every root × every quality, e.g. `csm7`, `cMaj7`) | Note name / rest / chord / repeat / chord name (e.g. C# minor seventh) |
 | After note name or chord name | `:` | Octave delimiter |
 | After `:` (2nd section) | `0`..`9` | Octave (0-9) |
 | After octave | `:` | Duration delimiter |
@@ -719,7 +727,7 @@ In the tables below, "Completion" refers to items displayed as selectable candid
 | After `[...]` chord / chord name | `arp` | Arpeggio |
 | After `arp(` | `up`, `down`, `updown`, `random` | Arpeggio direction |
 | After `arp(up, ` | `4`, `8`, `16` | Note resolution for triggering interval |
-| Chord position in a scale-specified clip | Diatonic chord candidates | Degree info (e.g., IVm7 - subdominant) |
+| Chord position in a scale-specified clip | Scale tones, diatonic chord candidates (major as `cM`), all note names and chord names | Degree info (e.g., IVm7 - subdominant) |
 
 #### scene
 

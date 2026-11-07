@@ -110,6 +110,7 @@ In CVG files, the following behavior is applied to prevent accidental completion
 - Completion candidates are **not auto-selected** (`preselect = None`)
 - `Enter` only confirms a candidate **when explicitly selected via `C-n` / `C-p`**
 - Pressing `Enter` without selecting a candidate inserts a normal newline
+- Candidate order follows the order decided by lcvgc (scale tones → diatonic chords → single notes → all chord names)
 
 When nvim-cmp is not installed, fallback completion via `vim.fn.complete()` is used.
 

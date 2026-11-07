@@ -111,6 +111,38 @@ describe('lcvgc.lsp.completion', function()
       assert.are.equal('lsp_completion', last_payload.type)
     end)
 
+    it('sort_text が sortText として渡り、無い候補では nil になる', function()
+      package.loaded['lcvgc.connection'] = {
+        is_connected = function() return true end,
+        request = function(payload, handler)
+          last_payload = payload
+          handler({
+            success = true,
+            lsp = {
+              type = 'completion',
+              items = {
+                { label = 'cs', kind = 'NoteName', sort_text = '2_01' },
+                { label = 'csm7', detail = 'C# マイナーセブンス', kind = 'ChordName', sort_text = '3_01_04_0' },
+                { label = 'tempo', kind = 'Keyword' },
+              },
+            },
+          })
+          return true
+        end,
+      }
+      completion = require('lcvgc.lsp.completion')
+      local src = completion.new()
+
+      local result = nil
+      src:complete({}, function(r)
+        result = r
+      end)
+
+      assert.are.equal('2_01', result.items[1].sortText)
+      assert.are.equal('3_01_04_0', result.items[2].sortText)
+      assert.is_nil(result.items[3].sortText)
+    end)
+
     it('空アイテムの場合、空の items で callback が呼ばれる', function()
       package.loaded['lcvgc.connection'] = {
         is_connected = function() return true end,
