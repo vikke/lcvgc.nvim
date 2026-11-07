@@ -627,6 +627,14 @@ CVG ファイルでは補完候補の誤確定を防ぐため、以下の `cmp.s
 - `<CR>` は `cmp.mapping.confirm({ select = false })` — 明示的に `C-n` / `C-p` で候補を選択した場合のみ Enter で確定する。未選択時の Enter は通常の改行として動作する
 - `performance.debounce` — 補完表示までの遅延（デフォルト 150ms、`opts.debounce` で設定可能）
 
+#### 補完候補の並び順
+
+デーモンが返す `lsp.items[].sort_text` を nvim-cmp の `sortText` として渡す（無い候補では渡さない）。CVG ファイルでは `sorting.comparators` を以下の順に設定し、`sort_text` を `score` より優先する。これにより clip 内では、スケール構成音 → ダイアトニックコード → 単音 → 根音 × 全種類のコード名、の順に並ぶ。
+
+`offset` → `exact` → `sort_text` → `score` → `recently_used` → `locality` → `kind` → `length` → `order`
+
+（nvim-cmp 既定の並びから `sort_text` を `score` の前へ移したもの。CVG ファイル以外には影響しない）
+
 nvim-cmp が未インストールの環境では `TextChangedI` autocmd + `vim.fn.complete()` によるフォールバック補完が動作する。
 
 ### 補完・ヒントの文脈依存テーブル
@@ -700,7 +708,7 @@ nvim-cmp が未インストールの環境では `TextChangedI` autocmd + `vim.f
 
 | カーソル位置 | 補完 | ヒント |
 |-------------|------|--------|
-| 楽器名の後 | `c`, `c#`, `db`, ..., `b`, `r`, `[`, `(`, `>`, コード名 | 音名 / 休符 / 和音 / 繰り返し / コード名 |
+| 楽器名の後 | `c`, `cs`, `db`, ..., `b`, `r`, `[`, `(`, `>`, コード名（根音 × 全種類。例: `csm7`, `cMaj7`） | 音名 / 休符 / 和音 / 繰り返し / コード名（例: C# マイナーセブンス） |
 | 音名 or コード名の後 | `:` | オクターブ区切り |
 | `:` の後（第2セクション） | `0`..`9` | オクターブ (0-9) |
 | オクターブの後 | `:` | 音長区切り |
@@ -711,7 +719,7 @@ nvim-cmp が未インストールの環境では `TextChangedI` autocmd + `vim.f
 | `[...]` 和音 / コード名の後 | `arp` | アルペジオ |
 | `arp(` の後 | `up`, `down`, `updown`, `random` | アルペジオ方向 |
 | `arp(up, ` の後 | `4`, `8`, `16` | 発音間隔の音符解像度 |
-| scale指定済みclip内のコード位置 | ダイアトニックコード候補 | degree情報 (例: IVm7 - subdominant) |
+| scale指定済みclip内のコード位置 | スケール構成音、ダイアトニックコード候補（メジャーは `cM` 形式）、全音名・全コード名 | degree情報 (例: IVm7 - subdominant) |
 
 #### scene
 

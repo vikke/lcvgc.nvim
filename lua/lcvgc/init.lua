@@ -1,7 +1,7 @@
 local M = {}
 
 --- プラグインバージョン
-M.version = '0.9.0'
+M.version = '0.10.0'
 
 local defaults = {
   port = 5555,
