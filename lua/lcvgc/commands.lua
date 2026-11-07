@@ -2,19 +2,23 @@ local connection = require('lcvgc.connection')
 local eval = require('lcvgc.eval')
 local layout = require('lcvgc.layout')
 local display = require('lcvgc.display')
+local scale_parser = require('lcvgc.scale')
 
 local M = {}
 
 local mic_job = nil
 
+--- カーソル位置の clip の scale（無ければグローバル scale）を取得する
+--- Get the scale of the clip at the cursor, falling back to the global scale.
+--- @return table|nil { root = string, type = string }。未指定なら nil / nil if unspecified
 local function get_clip_scale()
   local bufnr = vim.api.nvim_get_current_buf()
   local row = vim.api.nvim_win_get_cursor(0)[1]
   for i = row, 1, -1 do
     local line = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, false)[1]
-    local root, scale_type = line:match('%[scale%s+(%S+)%s+(%S+)%]')
-    if root and scale_type then
-      return { root = root, type = scale_type }
+    local clip_scale = scale_parser.from_clip_header(line)
+    if clip_scale then
+      return clip_scale
     end
     if line:match('^%s*clip%s') or line:match('^%s*scene%s') or line:match('^%s*session%s') then
       break
@@ -22,9 +26,9 @@ local function get_clip_scale()
   end
   for i = 1, vim.api.nvim_buf_line_count(bufnr) do
     local line = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, false)[1]
-    local root, scale_type = line:match('^%s*scale%s+(%S+)%s+(%S+)')
-    if root and scale_type then
-      return { root = root, type = scale_type }
+    local global_scale = scale_parser.from_global_line(line)
+    if global_scale then
+      return global_scale
     end
   end
   return nil

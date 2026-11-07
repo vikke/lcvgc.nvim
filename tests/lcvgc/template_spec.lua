@@ -7,12 +7,6 @@ describe("lcvgc.template", function()
   end)
 
   describe("is_ja", function()
-    local orig_lang
-
-    before_each(function()
-      orig_lang = os.getenv("LANG")
-    end)
-
     -- NOTE: os.getenvは直接設定できないため、内部関数を差し替えてテスト
     it("LANG=ja_JP.UTF-8 のとき true を返す", function()
       template._get_lang = function() return "ja_JP.UTF-8" end

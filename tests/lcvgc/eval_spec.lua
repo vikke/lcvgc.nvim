@@ -117,7 +117,7 @@ describe("lcvgc.eval", function()
 
     it("存在しないファイルのincludeでエラーを返す", function()
       local lines = { 'include nonexistent.cvg' }
-      local result, source_map, err = eval.expand_includes(lines, "main.cvg", tmpdir, {})
+      local _, _, err = eval.expand_includes(lines, "main.cvg", tmpdir, {})
       assert.is_truthy(err)
       assert.is_truthy(err:match("Cannot read"))
     end)
@@ -189,7 +189,7 @@ describe("lcvgc.eval", function()
     it("トップレベル単独行 (tempo) はその1行を返す", function()
       local lines = {
         "tempo 130",
-        "scale c minor",
+        "scale c_minor",
       }
       local s, e = eval.find_block_at_row(lines, 1)
       assert.equals(1, s)
@@ -199,7 +199,7 @@ describe("lcvgc.eval", function()
     it("トップレベル単独行 (scale) はその1行を返す", function()
       local lines = {
         "tempo 130",
-        "scale c minor",
+        "scale c_minor",
       }
       local s, e = eval.find_block_at_row(lines, 2)
       assert.equals(2, s)
@@ -287,15 +287,15 @@ describe("lcvgc.eval", function()
 
   describe("strip_playback_controls", function()
     it("トップレベルの play 行を除外する", function()
-      local lines = { "tempo 120", "play verse", "scale c minor" }
+      local lines = { "tempo 120", "play verse", "scale c_minor" }
       local result = eval.strip_playback_controls(lines)
-      assert.same({ "tempo 120", "scale c minor" }, result)
+      assert.same({ "tempo 120", "scale c_minor" }, result)
     end)
 
     it("トップレベルの stop 行を除外する", function()
-      local lines = { "tempo 120", "stop", "scale c minor" }
+      local lines = { "tempo 120", "stop", "scale c_minor" }
       local result = eval.strip_playback_controls(lines)
-      assert.same({ "tempo 120", "scale c minor" }, result)
+      assert.same({ "tempo 120", "scale c_minor" }, result)
     end)
 
     it("引数付きの play / stop 行も除外する", function()
