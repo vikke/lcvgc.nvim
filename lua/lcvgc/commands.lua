@@ -42,6 +42,9 @@ function M.setup(opts)
     local ok = connection.connect(port, display.on_message)
     if ok then
       require('lcvgc.ports').fetch()
+      -- 未接続の間に作られた新規 .cvg に文法チュートリアルを入れる
+      -- Fill new .cvg buffers created while disconnected with the tutorial
+      require('lcvgc.tutorial').on_connected()
       -- 接続成功時、現在のバッファが .cvg なら
       -- include 展開した定義（play/stop は除外）を eval 送信する
       -- On successful connect, eval the current .cvg buffer's
@@ -51,6 +54,12 @@ function M.setup(opts)
       end
     end
   end, { nargs = '?' })
+
+  -- 文法チュートリアルをカーソル行の下に挿入する
+  -- Insert the grammar tutorial below the cursor line
+  vim.api.nvim_create_user_command('LcvgcTutorial', function()
+    require('lcvgc.tutorial').insert_at_cursor()
+  end, {})
 
   vim.api.nvim_create_user_command('LcvgcDisconnect', function()
     connection.disconnect()

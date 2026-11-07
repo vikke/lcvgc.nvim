@@ -149,6 +149,14 @@ COMMANDS                                                  *lcvgc-commands*
 :LcvgcDisconnect                                       *:LcvgcDisconnect*
   Disconnect from the engine.
 
+:LcvgcTutorial                                          *:LcvgcTutorial*
+  Insert the grammar tutorial below the cursor line. The tutorial is
+  fetched from the engine (`tutorial` request) and every example in it is
+  checked by the lcvgc parser. Requires a connection to the engine.
+  A new .cvg file is filled with the tutorial automatically; if the engine
+  is not connected yet, it is filled when you connect (only while the
+  buffer is still empty and unmodified).
+
 :LcvgcStatus                                              *:LcvgcStatus*
   Display the current state of the engine: tempo, active scene, list of
   playing clips, and current bar/beat position.

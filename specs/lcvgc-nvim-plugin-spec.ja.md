@@ -410,6 +410,7 @@ vim.filetype.add({
 |----------|------|
 | `:LcvgcConnect [port]` | エンジンに接続 (デフォルト: 5555) |
 | `:LcvgcDisconnect` | 接続を切断 |
+| `:LcvgcTutorial` | 文法チュートリアルをカーソル行の下に挿入（エンジンの `tutorial` リクエストで取得。要接続） |
 | `:LcvgcStatus` | エンジンの状態を表示（接続状況、再生中のscene等） |
 | `:LcvgcEvalFile` | 現在バッファ全体をeval（include展開 + ソースマップ付き） |
 | `:LcvgcStop` | 全停止（`stop` をevalするショートカット） |

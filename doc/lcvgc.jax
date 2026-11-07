@@ -147,6 +147,13 @@ require('lcvgc').setup({opts})
 :LcvgcDisconnect                                       *:LcvgcDisconnect*
   エンジンとの接続を切断する。
 
+:LcvgcTutorial                                          *:LcvgcTutorial*
+  文法チュートリアルをカーソル行の下に挿入する。チュートリアルはエンジン
+  から取得し（`tutorial` リクエスト）、例文はすべて lcvgc のパーサで検証
+  済み。エンジンへの接続が必要。
+  新規 .cvg ファイルには自動で挿入される。未接続の場合は、接続した時点で
+  バッファがまだ空・未編集なら挿入される。
+
 :LcvgcStatus                                              *:LcvgcStatus*
   エンジンの現在の状態を表示する。テンポ、再生中のscene、再生中の
   clip一覧、現在の小節/拍位置を通知する。
