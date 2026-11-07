@@ -799,19 +799,51 @@ tree-sitter-cvg/
 
 Registering with Neovim:
 
+`setup()` in `lua/lcvgc/treesitter.lua` (called from `require('lcvgc').setup()`) registers the cvg parser with nvim-treesitter, supporting both the `master` and `main` branches. It never throws: if nvim-treesitter is not installed, nothing is registered, and if registration fails, only a warning is shown via `vim.notify` (`WARN`) and the rest of `setup()` continues.
+
+The branch is detected from `nvim-treesitter.parsers`: `master` if it has a `get_parser_configs()` function, otherwise `main`. `setup()` does the following in order:
+
+1. Create a `User TSUpdate` autocmd (augroup `lcvgc_treesitter_register`). It is always created, regardless of whether nvim-treesitter is installed or which branch is used, so that the parser is also registered when nvim-treesitter is loaded later. Because nvim-treesitter (`main`) reloads `nvim-treesitter.parsers` before firing `TSUpdate` (e.g. on `:TSInstall`), the callback `require`s the module again every time and assigns `cvg` only when the branch is `main`. Failures in the callback are not notified, and the callback returns nothing (returning `true` would delete the autocmd).
+2. Register the parser immediately.
+   - **master**: `require('nvim-treesitter.parsers').get_parser_configs().cvg = <parser info for master>`, then clear nvim-treesitter's query cache for cvg (`invalidate_query_cache`, best-effort).
+   - **main**: `require('nvim-treesitter.parsers').cvg = <parser info for main>`.
+   - On failure: `vim.notify('lcvgc: failed to register cvg parser with nvim-treesitter (<branch> branch): <error>', vim.log.levels.WARN)`.
+3. Clear `cvg` / `highlights` from the cache of Neovim core's `vim.treesitter.query.get`. When lazy.nvim adds the plugin to `runtimepath` on lazy loading, `OptionSet` is not fired, so a `nil` cached earlier would leave cvg buffers unhighlighted for the rest of the session. `clear` is not a public API, so it is called via `pcall` only if it exists.
+4. Start highlighting: a `FileType cvg` autocmd (augroup `lcvgc_treesitter`, separate from the registration augroup so that `clear = true` does not delete each other's autocmds) calls `vim.treesitter.start()` directly, and highlighting is also started for already loaded cvg buffers. This is the same on both branches (`main` does not enable highlighting by itself).
+
+Parser info for `master`:
+
 ```lua
-vim.api.nvim_create_autocmd('User', {
-  pattern = 'TSUpdate',
-  callback = function()
-    require('nvim-treesitter.parsers').cvg = {
-      install_info = {
-        url = 'https://github.com/<user>/tree-sitter-cvg',
-        files = { 'src/parser.c' },
-      },
-    }
-  end,
-})
+{
+  install_info = {
+    url = 'https://github.com/vikke/tree-sitter-cvg',
+    files = { 'src/parser.c', 'src/scanner.c' },
+    branch = 'main',
+    generate_requires_npm = false,
+    requires_generate_from_grammar = false,
+  },
+  filetype = { 'cvg' },
+}
 ```
+
+- `branch = 'main'` is required: without it, nvim-treesitter (`master`) tries to fetch the `master` branch, which does not exist in tree-sitter-cvg, and the install fails.
+
+Parser info for `main`:
+
+```lua
+{
+  install_info = {
+    url = 'https://github.com/vikke/tree-sitter-cvg',
+    branch = 'main',
+  },
+}
+```
+
+- Keys for `master` only (`files`, `filetype`, etc.) are not included.
+- `queries` is not specified, so the highlight queries bundled with this plugin (`queries/cvg/highlights.scm`) are used.
+- `revision` is not pinned (the HEAD of `branch` is fetched), so `:TSUpdate` does not update cvg on `main`. Update the parser with `:TSInstall! cvg` (works on both branches).
+
+Since the parser is registered in `setup()`, if lcvgc.nvim is lazy-loaded, run `:TSInstall cvg` after opening a `.cvg` file so that lcvgc has been loaded.
 
 ### 12.2 Highlight Queries (highlights.scm)
 

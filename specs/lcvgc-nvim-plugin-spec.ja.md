@@ -792,19 +792,51 @@ tree-sitter-cvg/
 
 Neovimへの登録：
 
+`lua/lcvgc/treesitter.lua` の `setup()`（`require('lcvgc').setup()` から呼ばれる）で、nvim-treesitter の `master` / `main` 両ブランチに対応して cvg パーサーを登録する。例外は投げない。nvim-treesitter が未導入なら何も登録せず、登録に失敗しても `vim.notify` で警告（`WARN`）を出すだけで、`setup()` の残りの処理は続行する。
+
+ブランチは `nvim-treesitter.parsers` に `get_parser_configs()` 関数があれば `master`、無ければ `main` と判定する。`setup()` は以下を順に行う。
+
+1. `User TSUpdate` autocmd を作成する（augroup `lcvgc_treesitter_register`）。後から nvim-treesitter が読み込まれた場合にも登録されるよう、nvim-treesitter の有無・ブランチに関わらず常に作成する。nvim-treesitter（`main`）は `:TSInstall` 等で `TSUpdate` を発火する前に `nvim-treesitter.parsers` を再読み込みするため、コールバック内で毎回 `require` し直し、`main` のときだけ `cvg` を代入する。コールバック内の失敗は通知せず、コールバックは値を返さない（`true` を返すと autocmd が削除されるため）。
+2. パーサーを即時登録する。
+   - **master**: `require('nvim-treesitter.parsers').get_parser_configs().cvg = <master 用パーサー情報>` の後、nvim-treesitter の cvg のクエリキャッシュをクリアする（`invalidate_query_cache`、best-effort）。
+   - **main**: `require('nvim-treesitter.parsers').cvg = <main 用パーサー情報>`。
+   - 失敗時: `vim.notify('lcvgc: failed to register cvg parser with nvim-treesitter (<branch> branch): <error>', vim.log.levels.WARN)`。
+3. Neovim 本体の `vim.treesitter.query.get` のキャッシュから `cvg` / `highlights` を消す。lazy.nvim の遅延ロードで `runtimepath` に追加された場合は `OptionSet` が発火しないため、先にキャッシュされた `nil` が残り、セッション中 cvg バッファがハイライトされなくなるのを防ぐ。`clear` は非公開 API なので、存在する場合のみ `pcall` で呼ぶ。
+4. ハイライトを開始する。`FileType cvg` autocmd（augroup `lcvgc_treesitter`。`clear = true` で互いの autocmd を消し合わないよう、登録用とは別名）から `vim.treesitter.start()` を直接呼び、読み込み済みの cvg バッファにも開始する。どちらのブランチでも同じ（`main` はハイライトを自動で有効にしない）。
+
+`master` 用パーサー情報：
+
 ```lua
-vim.api.nvim_create_autocmd('User', {
-  pattern = 'TSUpdate',
-  callback = function()
-    require('nvim-treesitter.parsers').cvg = {
-      install_info = {
-        url = 'https://github.com/<user>/tree-sitter-cvg',
-        files = { 'src/parser.c' },
-      },
-    }
-  end,
-})
+{
+  install_info = {
+    url = 'https://github.com/vikke/tree-sitter-cvg',
+    files = { 'src/parser.c', 'src/scanner.c' },
+    branch = 'main',
+    generate_requires_npm = false,
+    requires_generate_from_grammar = false,
+  },
+  filetype = { 'cvg' },
+}
 ```
+
+- `branch = 'main'` は必須。無いと nvim-treesitter（`master`）は tree-sitter-cvg に存在しない `master` ブランチを取得しに行き、インストールに失敗する。
+
+`main` 用パーサー情報：
+
+```lua
+{
+  install_info = {
+    url = 'https://github.com/vikke/tree-sitter-cvg',
+    branch = 'main',
+  },
+}
+```
+
+- `master` 専用のキー（`files` / `filetype` 等）は含めない。
+- `queries` は指定せず、本プラグイン同梱のハイライトクエリ（`queries/cvg/highlights.scm`）を使う。
+- `revision` は固定しない（`branch` の HEAD を取得する）ため、`main` では `:TSUpdate` で cvg は更新されない。更新は `:TSInstall! cvg` で行う（両ブランチ共通）。
+
+登録は `setup()` で行うため、lcvgc.nvim を遅延ロードしている場合、`:TSInstall cvg` は `.cvg` を開いて lcvgc がロードされた後に実行する。
 
 ### 12.2 ハイライトクエリ (highlights.scm)
 
