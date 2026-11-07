@@ -120,6 +120,15 @@ When nvim-cmp is not installed, fallback completion via `vim.fn.complete()` is u
 |--------|---------|-------------|
 | `debounce` | `150` | Delay before showing completions (milliseconds) |
 
+## Grammar Tutorial
+
+When you open a new `.cvg` file, the grammar tutorial fetched from the lcvgc daemon is inserted automatically.
+The tutorial is generated from the syntax docs owned by lcvgc's parsers, and every example is verified by the parser.
+The language switches between Japanese and English according to `LANG`.
+
+- If the daemon is not connected, the tutorial is inserted when you connect with `:LcvgcConnect`, as long as the buffer is still empty and unmodified.
+- `:LcvgcTutorial` inserts the tutorial below the cursor line at any time (requires a connection).
+
 ## MIDI Input (Inserting Keyboard Performance into the Buffer)
 
 Connect a MIDI input device (such as a keyboard) to the lcvgc daemon and write the notes you play directly into the buffer as DSL syntax.

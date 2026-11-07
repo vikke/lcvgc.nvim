@@ -417,6 +417,7 @@ vim.filetype.add({
 |---------|--------|
 | `:LcvgcConnect [port]` | Connect to the engine (default: 5555) |
 | `:LcvgcDisconnect` | Disconnect from the engine |
+| `:LcvgcTutorial` | Insert the grammar tutorial below the cursor line (fetched with the engine's `tutorial` request; requires a connection) |
 | `:LcvgcStatus` | Display engine status (connection state, currently playing scene, etc.) |
 | `:LcvgcEvalFile` | Evaluate entire current buffer (with include expansion + source map) |
 | `:LcvgcStop` | Stop all (shortcut for evaluating `stop`) |

@@ -1,7 +1,7 @@
 local M = {}
 
 --- プラグインバージョン
-M.version = '1.0.0'
+M.version = '1.1.0'
 
 local defaults = {
   port = 5555,
@@ -41,14 +41,15 @@ function M.setup(opts)
     end
   end
 
-  -- 新規 .cvg ファイル作成時にサンプルテンプレートを自動挿入
+  -- 新規 .cvg ファイル作成時に、デーモンから取得した文法チュートリアルを挿入する
+  -- （未接続なら接続後に、バッファがまだ空・未編集のときだけ挿入）
+  -- Insert the grammar tutorial from the daemon into new .cvg files
+  -- (deferred until connected; only while the buffer is still empty and unmodified)
   vim.api.nvim_create_autocmd('BufNewFile', {
     pattern = '*.cvg',
-    group = vim.api.nvim_create_augroup('lcvgc_template', { clear = true }),
+    group = vim.api.nvim_create_augroup('lcvgc_tutorial', { clear = true }),
     callback = function(ev)
-      local lines = require('lcvgc.template').get_lines()
-      vim.api.nvim_buf_set_lines(ev.buf, 0, -1, false, lines)
-      vim.bo[ev.buf].modified = false
+      require('lcvgc.tutorial').on_new_file(ev.buf)
     end,
   })
 
