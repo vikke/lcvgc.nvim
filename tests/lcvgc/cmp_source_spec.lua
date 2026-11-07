@@ -16,6 +16,20 @@ describe("lcvgc.cmp_source", function()
         end,
       },
       PreselectMode = { None = 'none', Item = 'item' },
+      -- cmp.config.compare の比較関数を、識別用の文字列で代用する
+      config = {
+        compare = {
+          offset = 'offset',
+          exact = 'exact',
+          score = 'score',
+          recently_used = 'recently_used',
+          locality = 'locality',
+          kind = 'kind',
+          sort_text = 'sort_text',
+          length = 'length',
+          order = 'order',
+        },
+      },
       mapping = {
         preset = {
           insert = function(overrides) return overrides end,
@@ -336,6 +350,26 @@ describe("lcvgc.cmp_source", function()
       local cr_mapping = cmp_mock.filetype_calls[1].opts.mapping['<CR>']
       assert.is_not_nil(cr_mapping)
       assert.is_false(cr_mapping.select)
+    end)
+
+    it("sortText を score より優先する comparators が設定される", function()
+      cmp_mock.filetype_calls = {}
+
+      cmp_source.setup()
+
+      local sorting = cmp_mock.filetype_calls[1].opts.sorting
+      assert.is_not_nil(sorting)
+      assert.same({
+        'offset',
+        'exact',
+        'sort_text',
+        'score',
+        'recently_used',
+        'locality',
+        'kind',
+        'length',
+        'order',
+      }, sorting.comparators)
     end)
 
     it("opts 未指定時はデフォルト 150ms", function()
