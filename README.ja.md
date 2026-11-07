@@ -11,7 +11,7 @@ midi to cv を使っての moduler synth を想定した live coding tool kit.
 
 - Neovim 0.10 以上
 - lcvgcエンジン（別途インストール）
-- Tree-sitterハイライトを使う場合: nvim-treesitter
+- Tree-sitterハイライトを使う場合: nvim-treesitter（`master`/`main` ブランチ）
 
 ### lazy.nvim (推奨)
 
@@ -73,6 +73,17 @@ nvim-treesitter を使っている場合、以下のコマンドで cvg パー�
 ```
 
 プラグインの `setup()` 呼び出し時にパーサー情報が自動登録されるため、追加の設定は不要です。
+lcvgc.nvim を遅延ロード（例: lazy.nvim の `event` 指定）している場合は、`.cvg` ファイルを開いて lcvgc.nvim がロード（`setup()` 実行）された後に `:TSInstall cvg` を実行してください。
+nvim-treesitter の `master` / `main` どちらのブランチにも対応しています。どちらを使うかは Neovim のバージョンによります（[nvim-treesitter の README](https://github.com/nvim-treesitter/nvim-treesitter) を参照）。
+`main` ブランチでは、パーサーのビルドに `tree-sitter` CLI も必要です。
+
+パーサーを最新版に更新するには、再インストールしてください:
+
+```vim
+:TSInstall! cvg
+```
+
+`main` ブランチではパーサーの revision を固定していないため、`:TSUpdate` では cvg は更新されません。
 
 #### Windows での準備
 

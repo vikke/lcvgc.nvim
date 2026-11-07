@@ -10,7 +10,7 @@ An engine and Vim plugin for live coding. A live coding toolkit designed for mod
 
 - Neovim 0.10 or later
 - lcvgc engine (installed separately)
-- For Tree-sitter highlighting: nvim-treesitter
+- For Tree-sitter highlighting: nvim-treesitter (`master` or `main` branch)
 
 ### lazy.nvim (Recommended)
 
@@ -72,6 +72,17 @@ If you use nvim-treesitter, you can install the cvg parser with the following co
 ```
 
 The parser information is automatically registered when `setup()` is called, so no additional configuration is needed.
+If lcvgc.nvim is lazy-loaded (e.g. with the `event` option of lazy.nvim), run `:TSInstall cvg` after opening a `.cvg` file, once lcvgc.nvim has been loaded (`setup()` has been called).
+Both the `master` and `main` branches of nvim-treesitter are supported. Which branch to use depends on your Neovim version (see the [nvim-treesitter README](https://github.com/nvim-treesitter/nvim-treesitter)).
+With the `main` branch, the `tree-sitter` CLI is also required to build the parser.
+
+To update the parser to the latest version, reinstall it:
+
+```vim
+:TSInstall! cvg
+```
+
+With the `main` branch, `:TSUpdate` does not update cvg because the parser revision is not pinned.
 
 #### Windows Setup
 
