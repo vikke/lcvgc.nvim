@@ -49,7 +49,7 @@ REQUIREMENTS                                            *lcvgc-requirements*
 
 - Neovim 0.10 or later
 - lcvgc engine (installed separately)
-- For Tree-sitter highlighting: nvim-treesitter
+- For Tree-sitter highlighting: nvim-treesitter (`master` or `main` branch)
 
 ==============================================================================
 INSTALLATION                                            *lcvgc-installation*
@@ -289,22 +289,38 @@ Design principles:~
 ==============================================================================
 TREE-SITTER                                              *lcvgc-treesitter*
 
-A Tree-sitter grammar for the lcvgc DSL is bundled with the plugin.
+Syntax highlighting for `.cvg` files uses the tree-sitter-cvg parser
+(https://github.com/vikke/tree-sitter-cvg) and the highlight queries bundled
+with this plugin.
 
 Installing tree-sitter-cvg:~
 
-If you are using nvim-treesitter, you need to register the parser:
->lua
-  local parser_config = require('nvim-treesitter.parsers').get_parser_configs()
-  parser_config.cvg = {
-    install_info = {
-      url = '/path/to/lcvgc.nvim/tree-sitter-cvg',
-      files = { 'src/parser.c' },
-    },
-    filetype = 'cvg',
-  }
+If nvim-treesitter is installed, setup() registers the cvg parser with it
+automatically, so no extra configuration is needed. Both the `master` and
+`main` branches of nvim-treesitter are supported. Install the parser with:
+>vim
+  :TSInstall cvg
 <
-Then build the parser with `:TSInstall cvg`.
+If lcvgc.nvim is lazy-loaded (e.g. the lazy.nvim example in
+|lcvgc-installation|), the parser is not registered until the plugin is
+loaded. Run `:TSInstall cvg` after opening a `.cvg` file so that lcvgc.nvim
+is loaded.
+
+Building the parser requires a C compiler. The `main` branch of
+nvim-treesitter also requires the `tree-sitter` CLI.
+
+Updating tree-sitter-cvg:~
+
+To update the parser to the latest version, reinstall it:
+>vim
+  :TSInstall! cvg
+<
+On the `main` branch, `:TSUpdate` does not update cvg because the parser
+revision is not pinned.
+
+Highlighting is started automatically for `cvg` buffers by a |FileType|
+autocommand, so no extra configuration is needed even on the `main` branch,
+where nvim-treesitter does not enable highlighting by itself.
 
 ==============================================================================
 LSP INTEGRATION                                              *lcvgc-lsp*
