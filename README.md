@@ -96,6 +96,33 @@ git clone https://github.com/vikke/lcvgc.nvim \
   ~/.local/share/nvim/site/pack/plugins/start/lcvgc.nvim
 ```
 
+## Default Key Mappings
+
+The following key mappings are set automatically when `setup()` is called.
+
+### All Buffers
+
+| Mode | Key | Action |
+|------|-----|--------|
+| Normal | `<C-e><C-e>` | Evaluate the block at the cursor (a `device` / `instrument` / `kit` / `clip` / `scene` / `session` block, or a top-level `tempo` / `scale` / `include` / `play` / `stop` line) |
+| Visual | `<C-e><C-e>` | Evaluate the selected range |
+| Normal | `<C-e><C-a>` | Evaluate the entire file (with `include` expansion) |
+| Normal | `<C-e><C-r>` | Toggle the MIDI input subscription on/off |
+
+> These are global mappings. Because `<C-e>` is used as a prefix, a lone `<C-e>` (scroll down) runs only after `timeoutlen` has elapsed.
+
+> **When evaluated changes take effect**: Overwriting a clip used by the playing scene via eval does not switch it immediately. The new content takes over at the **next 4-bar grid boundary**, counted from the start of the song (when `play` began), and all pending clips switch together on the same boundary. Currently this assumes 4/4 time only.
+
+### CVG Buffers Only
+
+| Mode | Key | Action |
+|------|-----|--------|
+| Normal | `K` | Show hover information |
+| Normal | `gd` | Go to definition |
+| Normal | `<leader>ds` | List document symbols |
+
+For the completion confirmation keys (`<CR>`, `C-n` / `C-p`), see [Confirmation Behavior](#confirmation-behavior).
+
 ## Completion Behavior
 
 When [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) is installed, completions are automatically integrated as nvim-cmp custom sources.
